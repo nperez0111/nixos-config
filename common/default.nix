@@ -8,17 +8,17 @@
       allowUnsupportedSystem = true;
     };
 
-    overlays =
-      # Apply each overlay found in the /overlays directory
-      let path = ../overlays; in with builtins;
-      map (n: import (path + ("/" + n)))
-          (filter (n: match ".*\\.nix" n != null ||
-                      pathExists (path + ("/" + n + "/default.nix")))
-                  (attrNames (readDir path)))
+    # overlays =
+    #   # Apply each overlay found in the /overlays directory
+    #   let path = ../overlays; in with builtins;
+    #   map (n: import (path + ("/" + n)))
+    #       (filter (n: match ".*\\.nix" n != null ||
+    #                   pathExists (path + ("/" + n + "/default.nix")))
+    #               (attrNames (readDir path)))
 
-      ++ [(import (builtins.fetchTarball {
-               url = "https://github.com/dustinlyons/emacs-overlay/archive/refs/heads/master.tar.gz";
-               sha256 = "0a48fq06hfn9r5yfhl1s23h296czlr5kz4xdm0brbi46dpds9n8k";
-           }))];
+    #   ++ [(import (builtins.fetchTarball {
+    #            url = "https://github.com/dustinlyons/emacs-overlay/archive/refs/heads/master.tar.gz";
+    #            sha256 = "05s1pchmiwg7vs994lzrddrhb54zix3faq372g7vwrwyms9vf151";
+    #        }))];
   };
 }

@@ -1,13 +1,17 @@
 { config, pkgs, lib, ... }:
 
 let
-  common-programs = import ../common/home-manager.nix { config = config; pkgs = pkgs; lib = lib; };
-  common-files = import ../common/files.nix {};
-  user = "dustin"; in
-{
+  common-programs = import ../common/home-manager.nix {
+    config = config;
+    pkgs = pkgs;
+    lib = lib;
+  };
+  common-files = import ../common/files.nix { config = config; };
+  user = "nickthesick";
+in {
   imports = [
     <home-manager/nix-darwin>
-   ./dock
+    #./dock
   ];
 
   # It me
@@ -19,35 +23,35 @@ let
   };
 
   # Fully declarative dock using the latest from Nix Store
-  local.dock.enable = true;
-  local.dock.entries = [
-    { path = "/Applications/Slack.app/"; }
-    { path = "/System/Applications/Messages.app/"; }
-    { path = "/System/Applications/Facetime.app/"; }
-    { path = "/Applications/Telegram.app/"; }
-    { path = "${pkgs.alacritty}/Applications/Alacritty.app/"; }
-    { path = "/Applications/Discord.app/"; }
-    { path = "/System/Applications/Music.app/"; }
-    { path = "/System/Applications/News.app/"; }
-    { path = "/System/Applications/Photos.app/"; }
-    { path = "/System/Applications/Photo Booth.app/"; }
-    { path = "/Applications/Drafts.app/"; }
-    { path = "/System/Applications/Home.app/"; }
-    {
-      path = "${config.users.users.${user}.home}/.local/share/bin/emacs-launcher.command";
-      section = "others";
-    }
-    {
-      path = "${config.users.users.${user}.home}/.local/share/";
-      section = "others";
-      options = "--sort name --view grid --display folder";
-    }
-    {
-      path = "${config.users.users.${user}.home}/.local/share/downloads";
-      section = "others";
-      options = "--sort name --view grid --display stack";
-    }
-  ];
+  # local.dock.enable = true;
+  # local.dock.entries = [
+  #   { path = "/Applications/Slack.app/"; }
+  #   { path = "/System/Applications/Messages.app/"; }
+  #   { path = "/System/Applications/Facetime.app/"; }
+  #   { path = "/Applications/Telegram.app/"; }
+  #   { path = "${pkgs.alacritty}/Applications/Alacritty.app/"; }
+  #   { path = "/Applications/Discord.app/"; }
+  #   { path = "/System/Applications/Music.app/"; }
+  #   { path = "/System/Applications/News.app/"; }
+  #   { path = "/System/Applications/Photos.app/"; }
+  #   { path = "/System/Applications/Photo Booth.app/"; }
+  #   { path = "/Applications/Drafts.app/"; }
+  #   { path = "/System/Applications/Home.app/"; }
+  #   {
+  #     path = "${config.users.users.${user}.home}/.local/share/bin/emacs-launcher.command";
+  #     section = "others";
+  #   }
+  #   {
+  #     path = "${config.users.users.${user}.home}/.local/share/";
+  #     section = "others";
+  #     options = "--sort name --view grid --display folder";
+  #   }
+  #   {
+  #     path = "${config.users.users.${user}.home}/.local/share/downloads";
+  #     section = "others";
+  #     options = "--sort name --view grid --display stack";
+  #   }
+  # ];
 
   # We use Homebrew to install impure software only (Mac Apps)
   homebrew.enable = true;
@@ -57,30 +61,29 @@ let
     upgrade = true;
   };
   homebrew.brewPrefix = "/opt/homebrew/bin";
-
+  homebrew.brews = pkgs.callPackage ./brews.nix { };
+  homebrew.taps = [ "homebrew/cask-versions" ];
+  homebrew.casks = pkgs.callPackage ./casks.nix { };
   # These app IDs are from using the mas CLI app
   # mas = mac app store
   # https://github.com/mas-cli/mas
   #
   # $ mas search <app name>
   #
-  homebrew.casks = pkgs.callPackage ./casks.nix {};
-  homebrew.masApps = {
-    "1password" = 1333542190;
-    "drafts" = 1435957248;
-    "hidden-bar" = 1452453066;
-    "tailscale" = 1475387142;
-    "yoink" = 457622435;
-  };
+  homebrew.masApps = { "Amphetamine" = 937984704; };
 
   # Enable home-manager to manage the XDG standard
   home-manager = {
     useGlobalPkgs = true;
     users.${user} = {
       home.enableNixpkgsReleaseCheck = false;
-      home.packages = pkgs.callPackage ./packages.nix {};
-      home.file = common-files // import ./files.nix { config = config; pkgs = pkgs; };
-      programs = common-programs // {};
+      home.packages = pkgs.callPackage ./packages.nix { };
+      home.file = common-files // import ./files.nix {
+        config = config;
+        pkgs = pkgs;
+      };
+      home.stateVersion = "21.05";
+      programs = common-programs // { };
 
       # https://github.com/nix-community/home-manager/issues/3344
       # Marked broken Oct 20, 2022 check later to remove this

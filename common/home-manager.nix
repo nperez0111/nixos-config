@@ -1,291 +1,155 @@
 { config, pkgs, lib, ... }:
 
-let name = "Dustin Lyons";
-    email = "dustin@dlyons.dev"; in
-{
+let
+  name = "Nick the Sick";
+  email = "nick@nickthesick.com";
+in {
   # Shared shell configuration
-  zsh.enable = true;
-  zsh.autocd = false;
-  zsh.cdpath = [ "~/.local/share/src" ];
-  zsh.dirHashes = {
-    code = "$HOME/.local/share/src";
-    nixos-config = "$HOME/.local/share/src/nixos-config";
-  };
-  zsh.plugins = [
-    {
-        name = "powerlevel10k";
-        src = pkgs.zsh-powerlevel10k;
-        file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
-    }
-    {
-        name = "powerlevel10k-config";
-        src = lib.cleanSource ./config;
-        file = "p10k.zsh";
-    }
-  ];
-  zsh.initExtraFirst = ''
-    if [[ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
-      . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-      . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
-    fi
-
-    # Define variables for directories
-    export PATH=$HOME/.pnpm-packages/bin:$HOME/.pnpm-packages:$PATH
-    export PATH=$HOME/.npm-packages/bin:$HOME/bin:$PATH
-    export PNPM_HOME=~/.pnpm-packages
-
-    # Cypress
-    export CYPRESS_INSTALL_BINARY=0
-    export CYPRESS_RUN_BINARY="$(command -v Cypress)"
-
-    # Remove history data we don't want to see
-    export HISTIGNORE="pwd:ls:cd"
-
-    # Define a custom history function that defaults to showing the last 1000 entries
-    show_history() {
-      if [ "$#" -eq 0 ]; then
-        history 1000
-      else
-        history "$@"
+  zsh = {
+    enable = true;
+    autocd = false;
+    oh-my-zsh = {
+      enable = true;
+      plugins = [ "git" "npm" ];
+    };
+    plugins = [
+      {
+        name = "syntax-highlighting";
+        src = pkgs.zsh-syntax-highlighting;
+        file = "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh";
+      }
+      {
+        name = "autosuggestions";
+        src = pkgs.zsh-autosuggestions;
+        file = "share/zsh-autosuggestions/zsh-autosuggestions.zsh";
+      }
+      {
+        name = "spaceship";
+        src = pkgs.spaceship-prompt;
+        file = "lib/spaceship-prompt/spaceship.zsh";
+      }
+    ];
+    localVariables = {
+      CASE_SENSITIVE = "false";
+      HISTIGNORE = "pwd:ls:cd";
+      SPACESHIP_CHAR_SYMBOL = "❯ ";
+    };
+    initExtraFirst = ''
+      if [[ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
+        . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+        . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
       fi
-    }
-    alias history='show_history'
 
-    # Ripgrep alias
-    alias search=rg -p $1 .
+      # Define a custom history function that defaults to showing the last 1000 entries
+      show_history() {
+        if [ "$#" -eq 0 ]; then
+          history 1000
+        else
+          history "$@"
+        fi
+      }
+      alias history='show_history'
 
-    # Emacs is my editor
-    export ALTERNATE_EDITOR=""
-    export EDITOR="emacsclient -t"
-    export VISUAL="emacsclient -c -a emacs"
-    e() {
-        emacsclient -t "$@"
-    }
+      # Ripgrep alias
+      alias search=rg -p $1 .
 
-    # nix shortcuts
-    shell() {
-        nix-shell '<nixpkgs>' -A "$1"
-    }
+      # Micro is my editor
+      export ALTERNATE_EDITOR=""
+      export EDITOR=$(which micro)
+      export VISUAL="code --wait"
 
-    # git shortcuts
-    alias gm="git merge --rebase"
-    alias gp="git pull origin"
+      # nix shortcuts
+      shell() {
+          nix-shell '<nixpkgs>' -A "$1"
+      }
 
-    # pnpm is a javascript package manager
-    alias pn=pnpm
-    alias px=pnpx
+      # bat makes cat pretty
+      alias cat=bat
 
-    # bat makes cat pretty
-    alias cat=bat
+      # Always color ls and group directories
+      alias ls='ls --color=auto'
+    '';
+  };
 
-    # Use difftastic, syntax-aware diffing
-    alias diff=difft
-
-    # Always color ls and group directories
-    alias ls='ls --color=auto'
-
-    # Weather report in your terminal
-    alias weather='curl "http://wttr.in"'
-
-    # Reboot into my dual boot Windows partition
-    alias windows='systemctl reboot --boot-loader-entry=auto-windows'
-  '';
-
+  gh = {
+    enable = true;
+    enableGitCredentialHelper = true;
+    settings = {
+      git_protocol = "https";
+      pager = "${pkgs.bat}/bin/bat";
+      prompt = "enabled";
+      aliases = {
+        branch = "!git pull && git switch -c nick/PRS-$1";
+        master = "!git switch master && git pull";
+        production = ''
+          !echo "What Jira issues are you releasing to production: " && read JIRA_ISSUES && echo "What is the CMRF you created here: https://hq.agilemd.com/cmrf/new" && read CMRF && gh pr create --base production --reviewer zackliston --assignee zackliston --title "Release $(cat package.json | jq -r .version) $JIRA_ISSUES" --body "CMRF: $CMRF"'';
+      };
+    };
+  };
   git = {
     enable = true;
-    ignores = [ "*.swp" ];
     userName = name;
     userEmail = email;
-    lfs = {
-      enable = true;
+    attributes = [
+      "npm-shrinkwrap.json merge=npm-merge-driver"
+      "package-lock.json merge=npm-merge-driver"
+    ];
+    ignores = [ ".tmp-projections/" "node_modules/" ".DS_Store" ];
+    aliases = {
+      cleanup = "fetch -p";
+      co = "checkout";
     };
+    signing = {
+      key = "0AD7F8215DF25741E7DC79F3420226D226E30AF2";
+      signByDefault = true;
+    };
+    lfs = { enable = true; };
     extraConfig = {
       init.defaultBranch = "main";
-      core = { 
-	    editor = "vim";
-        autocrlf = "input";
-      };
+      core.editor = "${pkgs.micro}/bin/micro";
       commit.gpgsign = true;
+      commit.template = "~/.config/git/template-message";
+      merge.tool = "vscode";
+      pager = {
+        diff = "delta";
+        log = "delta";
+        reflog = "delta";
+        show = "delta";
+      };
+      "mergetool \"vscode\"" = {
+        cmd = "code --wait --merge $REMOTE $LOCAL $BASE $MERGED";
+      };
+      "merge \"npm-merge-driver\"" = {
+        name = "automatically merge npm lockfiles";
+        driver = "volta run npm exec npm-merge-driver merge %A %O %B %P";
+      };
+
       pull.rebase = true;
+      fetch.prune = true;
       rebase.autoStash = true;
+      rerere = {
+        enabled = true;
+        autoUpdate = true;
+      };
+      push.autoSetupRemote = true;
     };
-  };
 
-  vim = {
-    enable = true;
-    plugins = with pkgs.vimPlugins; [ vim-airline vim-airline-themes vim-startify vim-tmux-navigator ];
-    settings = { ignorecase = true; };
-    extraConfig = ''
-      "" General
-      set number
-      set history=1000
-      set nocompatible
-      set modelines=0
-      set encoding=utf-8
-      set scrolloff=3
-      set showmode
-      set showcmd
-      set hidden
-      set wildmenu
-      set wildmode=list:longest
-      set cursorline
-      set ttyfast
-      set nowrap
-      set ruler
-      set backspace=indent,eol,start
-      set laststatus=2
-      set clipboard=autoselect
-
-      " Dir stuff
-      set nobackup
-      set nowritebackup
-      set noswapfile
-      set backupdir=~/.config/vim/backups
-      set directory=~/.config/vim/swap
-
-      " Relative line numbers for easy movement
-      set relativenumber
-      set rnu
-
-      "" Whitespace rules
-      set tabstop=8
-      set shiftwidth=2
-      set softtabstop=2
-      set expandtab
-
-      "" Searching
-      set incsearch
-      set gdefault
-
-      "" Statusbar
-      set nocompatible " Disable vi-compatibility
-      set laststatus=2 " Always show the statusline
-      let g:airline_theme='bubblegum'
-      let g:airline_powerline_fonts = 1
-
-      "" Local keys and such
-      let mapleader=","
-      let maplocalleader=" "
-
-      "" Change cursor on mode
-      :autocmd InsertEnter * set cul
-      :autocmd InsertLeave * set nocul
-
-      "" File-type highlighting and configuration
-      syntax on
-      filetype on
-      filetype plugin on
-      filetype indent on
-
-      "" Paste from clipboard
-      nnoremap <Leader>, "+gP
-
-      "" Copy from clipboard
-      xnoremap <Leader>. "+y
-
-      "" Move cursor by display lines when wrapping
-      nnoremap j gj
-      nnoremap k gk
-
-      "" Map leader-q to quit out of window
-      nnoremap <leader>q :q<cr>
-
-      "" Move around split
-      nnoremap <C-h> <C-w>h
-      nnoremap <C-j> <C-w>j
-      nnoremap <C-k> <C-w>k
-      nnoremap <C-l> <C-w>l
-
-      "" Easier to yank entire line
-      nnoremap Y y$
-
-      "" Move buffers
-      nnoremap <tab> :bnext<cr>
-      nnoremap <S-tab> :bprev<cr>
-
-      "" Like a boss, sudo AFTER opening the file to write
-      cmap w!! w !sudo tee % >/dev/null
-
-      let g:startify_lists = [
-        \ { 'type': 'dir',       'header': ['   Current Directory '. getcwd()] },
-        \ { 'type': 'sessions',  'header': ['   Sessions']       },
-        \ { 'type': 'bookmarks', 'header': ['   Bookmarks']      }
-        \ ]
-
-      let g:startify_bookmarks = [
-        \ '~/.local/share/src',
-        \ ]
-
-      let g:airline_theme='bubblegum'
-      let g:airline_powerline_fonts = 1
-      '';
-     };
-
-  alacritty = {
-    enable = true;
-    settings = {
-      cursor = {
-        style = "Block";
-      };
-
-      window = {
-        opacity = 1.0;
-        padding = {
-          x = 24;
-          y = 24;
-        };
-      };
-
-      font = {
-        normal = {
-          family = "MesloLGS NF";
-          style = "Regular";
-        };
-        size = lib.mkMerge [
-          (lib.mkIf pkgs.stdenv.hostPlatform.isLinux 10)
-          (lib.mkIf pkgs.stdenv.hostPlatform.isDarwin 14)
-        ];
-      };
-
-      dynamic_padding = true;
-      decorations = "full";
-      title = "Terminal";
-      class = {
-        instance = "Alacritty";
-        general = "Alacritty";
-      };
-
-      colors = {
-        primary = {
-          background = "0x1f2528";
-          foreground = "0xc0c5ce";
-        };
-
-        normal = {
-          black = "0x1f2528";
-          red = "0xec5f67";
-          green = "0x99c794";
-          yellow = "0xfac863";
-          blue = "0x6699cc";
-          magenta = "0xc594c5";
-          cyan = "0x5fb3b3";
-          white = "0xc0c5ce";
-        };
-
-        bright = {
-          black = "0x65737e";
-          red = "0xec5f67";
-          green = "0x99c794";
-          yellow = "0xfac863";
-          blue = "0x6699cc";
-          magenta = "0xc594c5";
-          cyan = "0x5fb3b3";
-          white = "0xd8dee9";
-        };
+    delta = {
+      enable = true;
+      options = {
+        side-by-side = true;
+        plus-color = "#012800";
+        minus-color = "#340001";
+        syntax-theme = "Monokai Extended";
+        colorMoved = "default";
       };
     };
   };
-
+  ssh = { enable = true; };
+  gpg = {
+    enable = true;
+    settings = { default-key = "0AD7F8215DF25741E7DC79F3420226D226E30AF2"; };
+  };
   tmux = {
     enable = true;
     plugins = with pkgs.tmuxPlugins; [
@@ -293,12 +157,6 @@ let name = "Dustin Lyons";
       sensible
       yank
       prefix-highlight
-      {
-        plugin = power-theme;
-        extraConfig = ''
-           set -g @tmux_power_theme 'gold'
-        '';
-      }
       {
         plugin = resurrect; # Used by tmux-continuum
 
@@ -319,7 +177,7 @@ let name = "Dustin Lyons";
       }
     ];
     terminal = "screen-256color";
-    prefix = "C-x";
+    prefix = "C-b";
     escapeTime = 10;
     historyLimit = 50000;
     extraConfig = ''
@@ -367,6 +225,6 @@ let name = "Dustin Lyons";
       bind-key -T copy-mode-vi 'C-k' select-pane -U
       bind-key -T copy-mode-vi 'C-l' select-pane -R
       bind-key -T copy-mode-vi 'C-\' select-pane -l
-      '';
-    };
+    '';
+  };
 }

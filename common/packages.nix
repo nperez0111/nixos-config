@@ -1,75 +1,43 @@
 { pkgs }:
 
 with pkgs; [
-  act # run github actions locally
-  alacritty
-  aspell
-  aspellDicts.en
-  awscli2
-  bash-completion
-  bat # A cat(1) clone with syntax highlighting
-  btop
-  cloudflared
+  bat
   coreutils
-  difftastic
-  dejavu_fonts
+  delta
   docker
   docker-compose
-  du-dust
-  emacs-all-the-icons-fonts
-  flyctl
-  ffmpeg
   fd
+  ffmpeg
   fzf
-  font-awesome
   gcc
-  gh # github
-  git-filter-repo
-  glow # CLI markdown viewer
+  gh
   gnupg
-  google-cloud-sdk
   go
   gopls
-  hack-font
   home-manager
   htop
-  hunspell
-  iftop
-  jetbrains-mono
   jq
-
-  # This is broken on MacOS for now
-  # https://github.com/NixOS/nixpkgs/issues/172165 
-  # keepassxc
-
-  killall
-  libfido2
+  micro
   neofetch
-  nodePackages.live-server
-  nodePackages.nodemon
-  nodePackages.npm
-  nodejs
-  noto-fonts
-  noto-fonts-emoji
   ngrok
+  nixfmt
+  obsidian
+  oh-my-zsh
   openssh
   pandoc
-  pinentry
-  python39
-  python39Packages.virtualenv
   ripgrep
-  slack
+  spaceship-prompt
   sqlite
-  ssm-session-manager-plugin
-  terraform
-  terraform-ls
-  tflint
-  tree
+  ssh-to-pgp
   tmux
+  tree
   unrar
   unzip
+  vscode
   wget
+  yq
   zip
-  zsh-powerlevel10k
-  meslo-lgs-nf # Meslo Nerd Font patch for powerlevel10
+  zsh
+  zsh-autosuggestions
+  zsh-syntax-highlighting
 ]

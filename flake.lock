@@ -1,6 +1,49 @@
 {
   "nodes": {
+    "agenix": {
+      "inputs": {
+        "darwin": "darwin",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1682101079,
+        "narHash": "sha256-MdAhtjrLKnk2uiqun1FWABbKpLH090oeqCSiWemtuck=",
+        "owner": "ryantm",
+        "repo": "agenix",
+        "rev": "2994d002dcff5353ca1ac48ec584c7f6589fe447",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ryantm",
+        "repo": "agenix",
+        "type": "github"
+      }
+    },
     "darwin": {
+      "inputs": {
+        "nixpkgs": [
+          "agenix",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1673295039,
+        "narHash": "sha256-AsdYgE8/GPwcelGgrntlijMg4t3hLFJFCRF3tL5WVjA=",
+        "owner": "lnl7",
+        "repo": "nix-darwin",
+        "rev": "87b9d090ad39b25b2400029c64825fc2a8868943",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lnl7",
+        "ref": "master",
+        "repo": "nix-darwin",
+        "type": "github"
+      }
+    },
+    "darwin_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -43,11 +86,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1683153724,
-        "narHash": "sha256-wiQ8pBYbbPklLngAz5w3VvwmpLqTNroKc7um56iCLHo=",
+        "lastModified": 1683276747,
+        "narHash": "sha256-T3st1VBg3wmhHyBQb0z12sTSGsQgiu3mxkS61nLO8Xs=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "514c0a71f47cb80282742d7e4b6913c2c0582c2d",
+        "rev": "669669fcb403e3137dfe599bbcc26e60502c3543",
         "type": "github"
       },
       "original": {
@@ -74,15 +117,15 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1683162415,
-        "narHash": "sha256-luJd8qVF3ejyh6TtYUCOwPhQ9JkLUfHYQFn4TvFGNeU=",
-        "owner": "dustinlyons",
+        "lastModified": 1683406050,
+        "narHash": "sha256-UlO7NzfYPNRcqOnkVD3KUdbZDTVW3zgXkdtlUkMFdrg=",
+        "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "8a4d4de3226e5aa8846bf800a980533026be095e",
+        "rev": "8f4308a4324b72a6132a3a6f4aaae2072faa4e01",
         "type": "github"
       },
       "original": {
-        "owner": "dustinlyons",
+        "owner": "NixOS",
         "ref": "master",
         "repo": "nixpkgs",
         "type": "github"
@@ -90,7 +133,8 @@
     },
     "root": {
       "inputs": {
-        "darwin": "darwin",
+        "agenix": "agenix",
+        "darwin": "darwin_2",
         "flake-utils": "flake-utils",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs_2"
