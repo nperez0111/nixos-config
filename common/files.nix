@@ -6,9 +6,23 @@ let
   xdg_stateHome = "${home}/.local/state";
 in {
 
-  # For some reason could not copy the files in?
-  "${xdg_configHome}/git/template-message".text =
-    builtins.readFile ./config/git/template-message;
+  # git
+  "${xdg_configHome}/git/template-message".text = ''
+      
+    # Commit message is imperative. Should complete the sentence
+    # If applied, this commit will "$COMMIT_MSG"
+    # Commit Types:
+    # feat, fix, chore, refactor, perf, style, test, docs, build
+    #
+    # <type>(scope): <short description>
+    #
+    # [optional body]
+    #
+    # [optional footer]
+    #
+    # BREAKING CHANGE: <description>
+    #
+  '';
   "${xdg_configHome}/gh/hosts.yml".text = ''
     github.com:
       oauth_token: "${

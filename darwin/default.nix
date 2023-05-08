@@ -175,18 +175,17 @@ in {
     };
 
     activationScripts = {
-      #extraActivation.text = ''
-      #  # Set remote ssh server to be on
-      #  sudo /usr/sbin/systemsetup -setremotelogin on >/dev/null 2>&1
-      #
-      #  # Don't allow the computer to sleep
-      #  sudo /usr/sbin/systemsetup -setcomputersleep off >/dev/null 2>&1
-      #
-      #  # Only allow the display to sleep for 6 hours
-      #  sudo /usr/sbin/systemsetup -setdisplaysleep 360 >/dev/null 2>&1
-      #'';
       # Auto apply system level settings https://medium.com/@zmre/nix-darwin-quick-tip-activate-your-preferences-f69942a93236
       postUserActivation.text = ''
+        # Set remote ssh server to be on
+        sudo /usr/sbin/systemsetup -setremotelogin on >/dev/null 2>&1
+
+        # Don't allow the computer to sleep
+        sudo /usr/sbin/systemsetup -setcomputersleep off >/dev/null 2>&1
+
+        # Only allow the display to sleep for 6 hours
+        sudo /usr/sbin/systemsetup -setdisplaysleep 360 >/dev/null 2>&1
+
         # Following line should allow us to avoid a logout/login cycle
         /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
       '';

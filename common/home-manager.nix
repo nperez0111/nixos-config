@@ -107,8 +107,8 @@ in {
     extraConfig = {
       init.defaultBranch = "main";
       core.editor = "${pkgs.micro}/bin/micro";
-      commit.gpgsign = true;
       commit.template = "~/.config/git/template-message";
+      commit.gpgsign = true;
       merge.tool = "vscode";
       pager = {
         diff = "delta";
