@@ -193,7 +193,8 @@ in {
 
     activationScripts = {
       # Auto apply system level settings https://medium.com/@zmre/nix-darwin-quick-tip-activate-your-preferences-f69942a93236
-      postUserActivation.text = ''
+      preActivation.text = ''
+        echo >&2 "Setting up system preferences..."
         # Set remote ssh server to be on
         sudo /usr/sbin/systemsetup -setremotelogin on >/dev/null 2>&1
 

@@ -25,16 +25,16 @@ in {
     { path = "${pkgs.vscode}/Applications/Visual Studio Code.app/"; }
     { path = "/System/Applications/System Settings.app/"; }
     { path = "/Applications/Orion.app/"; }
-    { path = "/Applications/Brave.app/"; }
+    { path = "/Applications/Brave Browser.app/"; }
     {
       path = "/Applications";
       section = "others";
-      options = "--sort name --view grid --display folder";
+      options = "--sort name --view grid --display stack";
     }
     {
       path = "${config.users.users.${user}.home}/Downloads";
       section = "others";
-      options = "--sort name --view grid --display stack";
+      options = "--sort name --view grid --display folder";
     }
     # {
     #   path = "${config.users.users.${user}.home}/.local/share/downloads";
