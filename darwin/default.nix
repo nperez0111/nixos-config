@@ -5,8 +5,25 @@ in {
 
   imports = [ ../common ../common/cachix ./home-manager.nix ];
 
-  # Auto upgrade nix package and the daemon service.
-  services.nix-daemon.enable = true;
+  services = {
+    # Auto upgrade nix package and the daemon service.
+    nix-daemon.enable = true;
+
+    # Setup skhd with configuration
+    skhd = {
+      enable = true;
+      skhdConfig = ''
+        # Youtube Brave
+        cmd + shift + alt - z : osascript -e 'set bravePath to "/Applications/Brave Browser.app"' -e 'tell application "System Events"' -e 'if not (exists process "Brave Browser") then' -e 'do shell script "open -a " & quoted form of bravePath' -e 'delay 3' -e 'end if' -e 'tell application "Brave Browser" to open location "https://youtube.com/tv"' -e 'delay 1' -e 'tell process "Brave Browser"' -e 'set value of attribute "AXFullScreen" of window 1 to true' -e 'end tell' -e 'end tell'
+        # Youtube Orion
+        cmd + shift + alt - y : osascript -e 'set orionPath to "/Applications/Orion.app"' -e 'tell application "System Events"' -e 'if not (exists process "Brave Browser") then' -e 'do shell script "open -a " & quoted form of orionPath' -e 'delay 3' -e 'end if' -e 'tell application "Orion" to open location "https://youtube.com/tv"' -e 'delay 1' -e 'tell process "Orion"' -e 'set value of attribute "AXFullScreen" of window 1 to true' -e 'end tell' -e 'end tell'
+        # Open Stremio
+        cmd + shift + alt - s : osascript -e 'set stremioPath to "/Applications/Stremio.app"' -e 'tell application "System Events"' -e 'if not (exists process "Stremio") then' -e 'do shell script "open -a " & quoted form of stremioPath' -e 'delay 3' -e 'end if' -e 'delay 1' -e 'tell process "stremio"' -e 'set value of attribute "AXFullScreen" of window 1 to true' -e 'end tell' -e 'end tell'
+        # Send space if youtube, enter everywhere else
+        cmd + shift + alt - e : osascript -e 'set currentURL to ""' -e 'tell application "System Events"' -e 'set frontAppName to name of first application process whose frontmost is true' -e 'if frontAppName is "Orion" then' -e 'tell application "Orion" to set currentURL to URL of current tab of front window' -e 'else if frontAppName is "Brave Browser" then' -e 'tell application "Brave Browser" to set currentURL to URL of active tab of front window' -e 'end if' -e 'if currentURL contains "youtube.com" then' -e 'tell process frontAppName to keystroke space' -e 'else' -e 'tell process frontAppName to keystroke return' -e 'end if' -e 'end tell'
+      '';
+    };
+  };
 
   age.secrets.github = {
     file = ../secrets/github;
