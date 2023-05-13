@@ -21,6 +21,7 @@ with pkgs; [
   neofetch
   ngrok
   nixfmt
+  niv
   obsidian
   oh-my-zsh
   openssh
@@ -40,4 +41,34 @@ with pkgs; [
   zsh
   zsh-autosuggestions
   zsh-syntax-highlighting
+
+  # VS CODE
+  vscode-extensions.arrterian.nix-env-selector
+  vscode-extensions.bbenoist.nix
+  vscode-extensions.brettm12345.nixfmt-vscode
+  vscode-extensions.coolbear.systemd-unit-file
+  vscode-extensions.davidanson.vscode-markdownlint
+  vscode-extensions.dbaeumer.vscode-eslint
+  vscode-extensions.donjayamanne.githistory
+  vscode-extensions.eamodio.gitlens
+  vscode-extensions.editorconfig.editorconfig
+  vscode-extensions.esbenp.prettier-vscode
+  vscode-extensions.formulahendry.auto-rename-tag
+  vscode-extensions.foxundermoon.shell-format
+  vscode-extensions.github.copilot
+  vscode-extensions.golang.go
+  vscode-extensions.gruntfuggly.todo-tree
+  vscode-extensions.jnoortheen.nix-ide
+  vscode-extensions.matthewpi.caddyfile-support
+  vscode-extensions.mechatroner.rainbow-csv
+  vscode-extensions.mikestead.dotenv
+  vscode-extensions.mkhl.direnv
+  vscode-extensions.ms-azuretools.vscode-docker
+  vscode-extensions.ms-vscode-remote.remote-ssh
+  vscode-extensions.redhat.vscode-yaml
+  vscode-extensions.ryu1kn.partial-diff
+  vscode-extensions.streetsidesoftware.code-spell-checker
+  vscode-extensions.tyriar.sort-lines
+  vscode-extensions.vscode-icons-team.vscode-icons
+  vscode-extensions.yzhang.markdown-all-in-one
 ]

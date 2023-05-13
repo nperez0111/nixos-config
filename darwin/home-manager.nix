@@ -32,6 +32,11 @@ in {
       options = "--sort name --view grid --display stack";
     }
     {
+      path =
+        "${config.users.users.${user}.home}/Applications/Home Manager Apps";
+      options = "--sort name --view grid --display stack";
+    }
+    {
       path = "${config.users.users.${user}.home}/Downloads";
       section = "others";
       options = "--sort name --view grid --display folder";

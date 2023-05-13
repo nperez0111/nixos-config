@@ -55,7 +55,8 @@ in {
       ${dockutil}/bin/dockutil --no-restart --add '${entry.path}' --section ${entry.section} ${entry.options}
     '') cfg.entries;
   in {
-    system.activationScripts.postUserActivation.text = ''
+    # TODO figure out how to use stdenvNoCC.mkDerivation to do this installing of the dock & other side-effects like the scripts below
+    system.activationScripts.postActivation.text = mkAfter ''
       echo >&2 "Setting up the Dock..."
       haveURIs="$(${dockutil}/bin/dockutil --list | ${pkgs.coreutils}/bin/cut -f2)"
       if ! diff -wu <(echo -n "$haveURIs") <(echo -n '${wantURIs}') >&2 ; then
@@ -66,6 +67,19 @@ in {
       else
         echo >&2 "Dock setup complete."
       fi
+
+      echo >&2 "Setting up system preferences..."
+      # Set remote ssh server to be on
+      sudo /usr/sbin/systemsetup -setremotelogin on >/dev/null 2>&1
+
+      # Don't allow the computer to sleep
+      sudo /usr/sbin/systemsetup -setcomputersleep off >/dev/null 2>&1
+
+      # Only allow the display to sleep for 6 hours
+      sudo /usr/sbin/systemsetup -setdisplaysleep 360 >/dev/null 2>&1
+
+      # Following line should allow us to avoid a logout/login cycle
+      /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
     '';
   });
 }

@@ -2,4 +2,4 @@
 
 with pkgs;
 let common-packages = import ../common/packages.nix { pkgs = pkgs; };
-in common-packages ++ [ dockutil skhd ]
+in common-packages ++ [ dockutil skhd pkgs.nivApps.cemu ]

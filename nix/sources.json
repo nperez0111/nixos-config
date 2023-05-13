@@ -1,0 +1,29 @@
+{
+    "cemu": {
+        "branch": "main",
+        "description": "Cemu - Wii U emulator",
+        "homepage": "https://cemu.info",
+        "owner": "cemu-project",
+        "repo": "Cemu",
+        "rev": "eda4cf4b241d56c5c16f6aa4d135b8a269676a76",
+        "sha256": "16pqzp16xssk12jz9rqasbpkkdwban5qkznnv5ij0dmn122zlfrm",
+        "type": "file",
+        "url": "https://github.com/cemu-project/Cemu/releases/download/v2.0-39/cemu-2.0-39-macos-12-x64.dmg",
+        "url_template": "https://github.com/cemu-project/Cemu/releases/download/v<version>/cemu-<version>-macos-12-x64.dmg",
+        "version": "2.0-39"
+    },
+    "flirc": {
+        "sha256": "1jkm8qv423fbyyfl14865amgmflimgvs5yq0zfd8c2y4hasv5chx",
+        "type": "file",
+        "url": "https://flirc.com/software/flirc-usb/GUI/release/mac/Flirc-3.26.8.dmg",
+        "url_template": "https://flirc.com/software/flirc-usb/GUI/release/mac/Flirc-<version>.dmg",
+        "version": "3.26.8"
+    },
+    "skip1s": {
+        "sha256": "0zkhx6k8gb4z54lb8nxy4l2fbyv8c5vv1j6bsyz9ar8vnb6kz3xw",
+        "type": "file",
+        "url": "https://update.flirc.tv/skipapp/beta/0.9.66/SkipApp-0.9.66-Beta-x64.dmg?token=skipAppUpdate",
+        "url_template": "https://update.flirc.tv/skipapp/beta/<version>/SkipApp-<version>-Beta-x64.dmg?token=skipAppUpdate",
+        "version": "0.9.66"
+    }
+}

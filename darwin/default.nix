@@ -1,6 +1,8 @@
-{ config, pkgs, nixpkgs, ... }:
+{ config, pkgs, nixpkgs, home-manager, ... }:
 
-let user = "nickthesick";
+let
+  user = "nickthesick";
+  nivSources = import ../nix/sources.nix;
 in {
 
   imports = [ ../common ../common/cachix ./home-manager.nix ];
@@ -30,6 +32,12 @@ in {
     owner = "501";
     group = "80";
   };
+
+  nixpkgs.overlays = [
+    (import ../overlays/niv-managed-dmg-apps/default.nix {
+      inherit nivSources;
+    })
+  ];
 
   # Setup user, packages, programs
   nix = {
@@ -191,23 +199,5 @@ in {
       remapCapsLockToControl = true;
     };
 
-    activationScripts = {
-      # Auto apply system level settings https://medium.com/@zmre/nix-darwin-quick-tip-activate-your-preferences-f69942a93236
-      preActivation.text = ''
-        echo >&2 "Setting up system preferences..."
-        # Set remote ssh server to be on
-        sudo /usr/sbin/systemsetup -setremotelogin on >/dev/null 2>&1
-
-        # Don't allow the computer to sleep
-        sudo /usr/sbin/systemsetup -setcomputersleep off >/dev/null 2>&1
-
-        # Only allow the display to sleep for 6 hours
-        sudo /usr/sbin/systemsetup -setdisplaysleep 360 >/dev/null 2>&1
-
-        # Following line should allow us to avoid a logout/login cycle
-        /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
-      '';
-
-    };
   };
 }

@@ -70,6 +70,132 @@ in {
       alias ls='ls --color=auto'
     '';
   };
+  vscode = {
+    enable = true;
+    extensions = with pkgs.vscode-extensions; [
+      arrterian.nix-env-selector
+      bbenoist.nix
+      brettm12345.nixfmt-vscode
+      coolbear.systemd-unit-file
+      davidanson.vscode-markdownlint
+      dbaeumer.vscode-eslint
+      donjayamanne.githistory
+      eamodio.gitlens
+      editorconfig.editorconfig
+      esbenp.prettier-vscode
+      formulahendry.auto-rename-tag
+      foxundermoon.shell-format
+      github.copilot
+      golang.go
+      gruntfuggly.todo-tree
+      jnoortheen.nix-ide
+      matthewpi.caddyfile-support
+      mechatroner.rainbow-csv
+      mikestead.dotenv
+      mkhl.direnv
+      ms-azuretools.vscode-docker
+      ms-vscode-remote.remote-ssh
+      redhat.vscode-yaml
+      ryu1kn.partial-diff
+      streetsidesoftware.code-spell-checker
+      tyriar.sort-lines
+      vscode-icons-team.vscode-icons
+      yzhang.markdown-all-in-one
+    ];
+    userSettings = {
+      "workbench.colorTheme" = "Default Dark+";
+      "workbench.iconTheme" = "vscode-icons";
+      "workbench.editor.limit.enabled" = true;
+      "workbench.editor.limit.value" = 12;
+      "workbench.editor.untitled.hint" = "hidden";
+      "workbench.sideBar.location" = "right";
+      "redhat.telemetry.enabled" = true;
+      "[dockerfile]" = {
+        "editor.defaultFormatter" = "ms-azuretools.vscode-docker";
+      };
+      "breadcrumbs.enabled" = true;
+      "[javascript][javascriptreact][mdx][typescript][typescriptreact][scss][markdown][json][jsonc]" =
+        {
+          "editor.codeActionsOnSave" = { "source.fixAll" = true; };
+          "editor.defaultFormatter" = "esbenp.prettier-vscode";
+          "editor.formatOnSave" = true;
+        };
+      "editor.bracketPairColorization.enabled" = true;
+      "editor.codeActionsOnSave" = { "source.fixAll" = true; };
+      "editor.fontFamily" =
+        "Fira Code, Hack, Menlo, Monaco, 'Courier New', monospace";
+      "editor.fontLigatures" = true;
+      "editor.fontSize" = 13;
+      "editor.formatOnSave" = true;
+      "editor.guides.bracketPairs" = true;
+      "editor.inlineSuggest.enabled" = true;
+      "editor.largeFileOptimizations" = false;
+      "editor.minimap.enabled" = false;
+      "editor.suggestSelection" = "first";
+      "editor.tabSize" = 2;
+      "editor.tokenColorCustomizations" = {
+        textMateRules = [
+          {
+            scope = [
+              "comment"
+              "entity.name.type.class"
+              "keyword"
+              "storage.modifier"
+              "storage.type.class.js"
+              "storage.type.function.js"
+              "storage.type.js"
+              "keyword.control.import.js"
+              "keyword.control.from.js"
+              "keyword.control.flow.js"
+              "keyword.control.conditional.js"
+              "keyword.control.loop.js"
+              "keyword.operator.new.js"
+            ];
+            settings = { fontStyle = "italic"; };
+          }
+          {
+            scope = [
+              "invalid"
+              "keyword.operator"
+              "constant.numeric.css"
+              "keyword.other.unit.px.css"
+              "constant.numeric.decimal.js"
+              "constant.numeric.json"
+              "entity.name.type.class.js"
+            ];
+            settings = { fontStyle = ""; };
+          }
+        ];
+      };
+      "files.exclude" = {
+        "**/.git" = true;
+        "**/.svn" = true;
+        "**/.hg" = true;
+        "**/CVS" = true;
+        "**/.DS_Store" = true;
+        "**/Thumbs.db" = true;
+        "**/node_modules" = true;
+        ".tmp-projections/" = true;
+      };
+      "files.watcherExclude" = {
+        "**/.git/objects/**" = true;
+        "**/.git/subtree-cache/**" = true;
+        "**/node_modules/*/**" = true;
+        ".volta/**" = true;
+        ".npm/**" = true;
+      };
+      "git.autofetch" = true;
+      "git.confirmSync" = false;
+      "git.enableSmartCommit" = true;
+      "git.fetchOnPull" = true;
+      "gitlens.hovers.currentLine.over" = "line";
+      "terminal.integrated.scrollback" = 1000001;
+      "terminal.integrated.showExitAlert" = false;
+      "terminal.integrated.tabs.enabled" = true;
+      "vsicons.dontShowNewVersionMessage" = true;
+      "window.zoomLevel" = 3;
+    };
+  };
 
   gh = {
     enable = true;
