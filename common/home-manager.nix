@@ -68,6 +68,11 @@ in {
 
       # Always color ls and group directories
       alias ls='ls --color=auto'
+
+
+      eval "$(gh completion -s zsh)"
+      # https://github.com/cantino/mcfly
+      eval "$(mcfly init zsh)"
     '';
   };
   vscode = {
@@ -109,7 +114,6 @@ in {
       "workbench.editor.limit.value" = 12;
       "workbench.editor.untitled.hint" = "hidden";
       "workbench.sideBar.location" = "right";
-      "redhat.telemetry.enabled" = true;
       "[dockerfile]" = {
         "editor.defaultFormatter" = "ms-azuretools.vscode-docker";
       };
@@ -189,11 +193,23 @@ in {
       "git.enableSmartCommit" = true;
       "git.fetchOnPull" = true;
       "gitlens.hovers.currentLine.over" = "line";
+      "gitlens.showWelcomeOnInstall" = false;
       "terminal.integrated.scrollback" = 1000001;
       "terminal.integrated.showExitAlert" = false;
       "terminal.integrated.tabs.enabled" = true;
       "vsicons.dontShowNewVersionMessage" = true;
+      "workbench.welcomePage.walkthroughs.openOnInstall" = false;
       "window.zoomLevel" = 3;
+      # Telemetry
+      "code-runner.enableAppInsights" = false;
+      "docker-explorer.enableTelemetry" = false;
+      "redhat.telemetry.enabled" = false;
+      "rpcServer.showStartupMessage" = false;
+      "extensions.ignoreRecommendations" = true;
+      "telemetry.enableCrashReporter" = false;
+      "telemetry.enableTelemetry" = false;
+      "telemetry.telemetryLevel" = "off";
+      "terraform.telemetry.enabled" = false;
     };
   };
 
@@ -216,10 +232,7 @@ in {
     enable = true;
     userName = name;
     userEmail = email;
-    attributes = [
-      "npm-shrinkwrap.json merge=npm-merge-driver"
-      "package-lock.json merge=npm-merge-driver"
-    ];
+    attributes = [ "package-lock.json merge=package-lock" ];
     ignores = [ ".tmp-projections/" "node_modules/" ".DS_Store" ];
     aliases = {
       cleanup = "fetch -p";
@@ -245,9 +258,10 @@ in {
       "mergetool \"vscode\"" = {
         cmd = "code --wait --merge $REMOTE $LOCAL $BASE $MERGED";
       };
-      "merge \"npm-merge-driver\"" = {
-        name = "automatically merge npm lockfiles";
-        driver = "volta run npm exec npm-merge-driver merge %A %O %B %P";
+      "merge \"package-lock\"" = {
+        name = "automatically merge conflicts in package-lock.json files";
+        driver = "volta run npm install --package-lock-only";
+        recursive = "binary";
       };
 
       pull.rebase = true;

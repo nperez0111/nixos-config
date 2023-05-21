@@ -1,3 +1,6 @@
 { ... }:
 
-[ "volta" ]
+[
+  "volta"
+  "cantino/mcfly/mcfly"
+]

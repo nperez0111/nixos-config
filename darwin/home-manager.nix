@@ -57,7 +57,7 @@ in {
   };
   homebrew.brewPrefix = "/opt/homebrew/bin";
   homebrew.brews = pkgs.callPackage ./brews.nix { };
-  homebrew.taps = [ "homebrew/cask-versions" ];
+  homebrew.taps = [ "homebrew/cask-versions" "cantino/mcfly" ];
   homebrew.casks = pkgs.callPackage ./casks.nix { };
   # These app IDs are from using the mas CLI app
   # mas = mac app store
