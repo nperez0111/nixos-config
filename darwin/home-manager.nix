@@ -26,6 +26,7 @@ in {
     { path = "/System/Applications/System Settings.app/"; }
     { path = "/Applications/Orion.app/"; }
     { path = "/Applications/Brave Browser.app/"; }
+    { path = "/Applications/Ryujinx.app"; }
     {
       path = "/Applications";
       section = "others";
@@ -65,7 +66,11 @@ in {
   #
   # $ mas search <app name>
   #
-  homebrew.masApps = { "Amphetamine" = 937984704; };
+  homebrew.masApps = {
+    "Amphetamine" = 937984704;
+    "Ferromagnetic" = 1546537151;
+    "Tailscale" = 1475387142;
+  };
 
   # Enable home-manager to manage the XDG standard
   home-manager = {
@@ -76,6 +81,7 @@ in {
       home.file = common-files // import ./files.nix {
         config = config;
         pkgs = pkgs;
+        lib = lib;
       };
       home.stateVersion = "21.05";
       programs = common-programs // { };

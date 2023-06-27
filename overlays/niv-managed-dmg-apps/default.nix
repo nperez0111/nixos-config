@@ -14,7 +14,15 @@ let
         echo "Installing $out..."
         mkdir -p mnt $out/Applications
         /usr/bin/hdiutil attach -readonly -mountpoint mnt $src
-        cp -r mnt/*.app $out/Applications/
+        # Install any .pkg files in the dmg
+        for pkg in mnt/*.pkg; do
+          echo /usr/bin/sudo /usr/sbin/installer -pkg "$pkg" -target / >> /tmp/todo
+        done
+        # Install any .app in the dmg
+        for app in *.app; do
+          echo "Copying $app..."
+          cp -r "$app" $out/Applications/
+        done
         /usr/bin/hdiutil detach -force mnt
       '';
     });

@@ -24,4 +24,6 @@ echo "${GREEN}Switching to new generation...${CLEAR}"
 echo "${GREEN}Cleaning up...${CLEAR}"
 rm -rf ./result
 
+sudo cp -L $HOME/.local/share/nix-sudoers /private/etc/sudoers.d/nix-sudoers
+
 echo "${GREEN}Done${CLEAR}"

@@ -11,4 +11,6 @@ cd $(dirname $(readlink -f $0))
 cd ..
 
 echo "${GREEN}Backing up existing configurations...${CLEAR}"
+echo -ne "Ryujinx..."
 zip -r ./configs/ryujinx.zip "$HOME/Library/Application Support/Ryujinx"
+echo "${GREEN}DONE${CLEAR}"

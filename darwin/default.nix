@@ -1,4 +1,4 @@
-{ config, pkgs, nixpkgs, home-manager, ... }:
+{ config, pkgs, nixpkgs, home-manager, lib, ... }:
 
 let
   user = "nickthesick";
@@ -57,6 +57,7 @@ in {
       options = "--delete-older-than 30d";
     };
 
+    settings.sandbox = false;
     # Turn this on to make command line easier
     extraOptions = ''
       experimental-features = nix-command flakes

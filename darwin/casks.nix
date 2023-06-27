@@ -7,10 +7,11 @@
   "gpg-suite-no-mail"
   "homebrew/cask-versions/dolphin-beta"
   "homebrew/cask/docker"
-  "orion"
+  "keka"
   "multimc"
+  "orion"
   "sonos"
-  "stremio"
   "spotify"
+  "stremio"
   "vlc"
 ]
