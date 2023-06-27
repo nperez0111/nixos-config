@@ -2,3 +2,7 @@
 *.swp
 result
 common/config/emacs/Emacs.el
+server/*.tar.gz
+configs/*
+NOTES.md
+config.zip
