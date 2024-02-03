@@ -9,9 +9,13 @@
   "homebrew/cask/docker"
   "keka"
   "multimc"
+  "ollama"
   "orion"
+  "orbstack"
+  "raycast"
   "sonos"
   "spotify"
+  "timemachineeditor"
   "stremio"
   "vlc"
 ]

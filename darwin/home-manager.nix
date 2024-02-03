@@ -27,6 +27,7 @@ in {
     { path = "/Applications/Orion.app/"; }
     { path = "/Applications/Brave Browser.app/"; }
     { path = "/Applications/Ryujinx.app"; }
+    { path = "/Applications/Stremio.app"; }
     {
       path = "/Applications";
       section = "others";

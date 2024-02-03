@@ -199,7 +199,7 @@ in {
       "terminal.integrated.tabs.enabled" = true;
       "vsicons.dontShowNewVersionMessage" = true;
       "workbench.welcomePage.walkthroughs.openOnInstall" = false;
-      "window.zoomLevel" = 3;
+      "window.zoomLevel" = 4;
       # Telemetry
       "code-runner.enableAppInsights" = false;
       "docker-explorer.enableTelemetry" = false;

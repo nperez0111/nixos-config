@@ -29,7 +29,7 @@
   "skip1s": {
     "sha256": "0zkhx6k8gb4z54lb8nxy4l2fbyv8c5vv1j6bsyz9ar8vnb6kz3xw",
     "type": "file",
-    "url": "https://update.flirc.tv/skipapp/beta/0.9.66/SkipApp-0.9.66-Beta-x64.dmg?token=skipAppUpdate",
+    "url": "https://update.flirc.tv/skipapp/beta/0.9.953/SkipApp-0.9.66-Beta-x64.dmg?token=skipAppUpdate",
     "url_template": "https://update.flirc.tv/skipapp/beta/<version>/SkipApp-<version>-Beta-x64.dmg?token=skipAppUpdate",
     "version": "0.9.66"
   }
