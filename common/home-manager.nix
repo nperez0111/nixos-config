@@ -215,9 +215,9 @@ in {
 
   gh = {
     enable = true;
-    enableGitCredentialHelper = true;
+    gitCredentialHelper = { enable = true; };
     settings = {
-      git_protocol = "https";
+      git_protocol = "ssh";
       pager = "${pkgs.bat}/bin/bat";
       prompt = "enabled";
       aliases = {
