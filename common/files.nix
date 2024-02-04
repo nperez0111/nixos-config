@@ -25,6 +25,13 @@ in {
   '';
   "${xdg_configHome}/gh/hosts.yml".text = ''
     github.com:
+      users:
+        nperez0111:
+            oauth_token: "${
+              builtins.replaceStrings [ "\n" ] [ "" ]
+              (builtins.readFile config.age.secrets.github.path)
+            }"
+      git_protocol: ssh
       oauth_token: "${
         builtins.replaceStrings [ "\n" ] [ "" ]
         (builtins.readFile config.age.secrets.github.path)
