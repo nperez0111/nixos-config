@@ -20,7 +20,7 @@ with pkgs; [
   micro
   neofetch
   ngrok
-  nixfmt
+  nixfmt-classic
   niv
   obsidian
   oh-my-zsh
