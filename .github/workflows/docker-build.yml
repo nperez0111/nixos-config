@@ -14,7 +14,7 @@ on:
       - "main"
 
 env:
-  IMAGE_NAME: caddy
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push-image:
@@ -59,7 +59,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4.4.0
         with:
-          images: ghcr.io/${{ env.IMAGE_NAME }}
+          images: ghcr.io/${{ env.IMAGE_NAME }}-caddy
           tags: |
             type=ref,event=branch
             type=ref,event=pr
