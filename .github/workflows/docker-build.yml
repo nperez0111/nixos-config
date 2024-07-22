@@ -97,6 +97,6 @@ jobs:
         uses: actions/attest-build-provenance@v1
         id: attest
         with:
-          subject-name: ghcr.io/${{ env.IMAGE_NAME }}
+          subject-name: ghcr.io/${{ env.IMAGE_NAME }}-caddy
           subject-digest: ${{ steps.build-and-push.outputs.digest }}
           push-to-registry: true
