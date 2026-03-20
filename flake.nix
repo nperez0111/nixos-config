@@ -20,7 +20,7 @@
       darwinConfigurations = {
         "nickthesicks-Mac-mini" = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
-          modules = [ ./darwin agenix.nixosModules.default ];
+          modules = [ ./darwin home-manager.darwinModules.home-manager agenix.nixosModules.default ];
           inputs = { inherit darwin home-manager nixpkgs agenix; };
         };
       };

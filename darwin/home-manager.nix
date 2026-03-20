@@ -9,7 +9,7 @@ let
   common-files = import ../common/files.nix { config = config; };
   user = "nickthesick";
 in {
-  imports = [ <home-manager/nix-darwin> ./dock ];
+  imports = [ ./dock ];
 
   # It me
   users.users.${user} = {
@@ -57,33 +57,61 @@ in {
     cleanup = "zap";
     upgrade = true;
   };
-  homebrew.brewPrefix = "/opt/homebrew/bin";
+  homebrew.prefix = "/opt/homebrew";
   homebrew.brews = pkgs.callPackage ./brews.nix { };
-  homebrew.taps = [ "homebrew/cask-versions" "cantino/mcfly" ];
+  homebrew.taps = [ ];
   homebrew.casks = pkgs.callPackage ./casks.nix { };
-  # These app IDs are from using the mas CLI app
-  # mas = mac app store
-  # https://github.com/mas-cli/mas
-  #
-  # $ mas search <app name>
-  #
-  homebrew.masApps = {
-    "Amphetamine" = 937984704;
-    "Ferromagnetic" = 1546537151;
-    "Tailscale" = 1475387142;
-  };
+  # masApps disabled — nix-darwin's mas integration uses `mas get`
+  # which was removed in mas 1.8.6+. Install these manually from
+  # the App Store if needed:
+  # - Amphetamine (937984704)
+  # - Ferromagnetic (1546537151)
+  # - Tailscale (1475387142)
 
   # Enable home-manager to manage the XDG standard
   home-manager = {
     useGlobalPkgs = true;
     users.${user} = {
+      # Disable buggy modules and replace with fixed versions
+      # https://github.com/nix-community/home-manager/pull/8164
+      disabledModules = [
+        "targets/darwin/linkapps.nix"
+        "targets/darwin/fonts.nix"
+      ];
       home.enableNixpkgsReleaseCheck = false;
       home.packages = pkgs.callPackage ./packages.nix { };
       home.file = common-files // import ./files.nix {
         config = config;
         pkgs = pkgs;
         lib = lib;
-      };
+      } // (let
+        # Workaround for home-manager pathsToLink bug
+        # https://github.com/nix-community/home-manager/pull/8164
+        hmPackages = config.home-manager.users.${user}.home.packages;
+        appsEnv = pkgs.buildEnv {
+          name = "home-manager-applications";
+          paths = hmPackages;
+          pathsToLink = [ "/Applications" ];
+        };
+        fontsEnv = pkgs.buildEnv {
+          name = "home-manager-fonts";
+          paths = hmPackages;
+          pathsToLink = [ "/share/fonts" ];
+        };
+        homeDir = config.users.users.${user}.home;
+        installDir = "${homeDir}/Library/Fonts/HomeManager";
+      in {
+        "Applications/Home Manager Apps".source =
+          lib.mkForce "${appsEnv}/Applications";
+        "Library/Fonts/.home-manager-fonts-version" = {
+          text = lib.mkForce "${fontsEnv}";
+          onChange = lib.mkForce ''
+            run mkdir -p ${lib.escapeShellArg installDir}
+            run ${pkgs.rsync}/bin/rsync $VERBOSE_ARG -acL --chmod=u+w --delete \
+              ${lib.escapeShellArgs [ "${fontsEnv}/share/fonts/" installDir ]}
+          '';
+        };
+      });
       home.stateVersion = "21.05";
       programs = common-programs // { };
 

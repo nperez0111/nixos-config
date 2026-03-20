@@ -1,7 +1,7 @@
 { ... }:
 
 [
-  "cantino/mcfly/mcfly"
+  "mcfly"
   "direnv"
   "projectm"
 ]

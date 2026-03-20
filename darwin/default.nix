@@ -7,10 +7,10 @@ in {
 
   imports = [ ../common ../common/cachix ./home-manager.nix ];
 
-  services = {
-    # Auto upgrade nix package and the daemon service.
-    nix-daemon.enable = true;
+  # Set the primary user for nix-darwin
+  system.primaryUser = "${user}";
 
+  services = {
     # Setup skhd with configuration
     skhd = {
       enable = true;
@@ -43,11 +43,10 @@ in {
 
   # Setup user, packages, programs
   nix = {
-    package = pkgs.nixUnstable;
+    package = pkgs.nix;
     settings.trusted-users = [ "@admin" "${user}" ];
 
     gc = {
-      user = "root";
       automatic = true;
       interval = {
         Weekday = 0;
@@ -68,11 +67,15 @@ in {
   system.checks.verifyNixPath = false;
 
   # Load configuration that is shared across systems
-  environment.systemPackages = (import ../common/packages.nix { pkgs = pkgs; });
+  environment.systemPackages = (import ../common/packages.nix { pkgs = pkgs; }) ++ [
+    pkgs.obsidian
+    pkgs.nivApps.cemu
+    pkgs.nivApps.flirc
+    pkgs.nivApps.skip1s
+    pkgs.nivApps.java
+  ];
 
-  # Enable fonts dir
-  fonts.fontDir.enable = true;
-  fonts.fonts = with pkgs; [ fira-code hack-font ];
+  fonts.packages = with pkgs; [ fira-code hack-font ];
 
   system = {
     stateVersion = 4;

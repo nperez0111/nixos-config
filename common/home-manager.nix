@@ -34,7 +34,7 @@ in {
       HISTIGNORE = "pwd:ls:cd";
       SPACESHIP_CHAR_SYMBOL = "❯ ";
     };
-    initExtraFirst = ''
+    initContent = lib.mkBefore ''
       if [[ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
         . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
         . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
@@ -77,7 +77,7 @@ in {
   };
   vscode = {
     enable = true;
-    extensions = with pkgs.vscode-extensions; [
+    profiles.default.extensions = with pkgs.vscode-extensions; [
       arrterian.nix-env-selector
       bbenoist.nix
       brettm12345.nixfmt-vscode
@@ -107,12 +107,11 @@ in {
       vscode-icons-team.vscode-icons
       yzhang.markdown-all-in-one
     ];
-    userSettings = {
+    profiles.default.userSettings = {
       "workbench.colorTheme" = "Default Dark+";
       "workbench.iconTheme" = "vscode-icons";
       "workbench.editor.limit.enabled" = true;
       "workbench.editor.limit.value" = 12;
-      "workbench.editor.untitled.hint" = "hidden";
       "workbench.sideBar.location" = "right";
       "[dockerfile]" = {
         "editor.defaultFormatter" = "ms-azuretools.vscode-docker";
@@ -120,7 +119,7 @@ in {
       "breadcrumbs.enabled" = true;
       "[javascript][javascriptreact][mdx][typescript][typescriptreact][scss][markdown][json][jsonc]" =
         {
-          "editor.codeActionsOnSave" = { "source.fixAll" = true; };
+          "editor.codeActionsOnSave" = { "source.fixAll" = "explicit"; };
           "editor.defaultFormatter" = "esbenp.prettier-vscode";
           "editor.formatOnSave" = true;
         };
@@ -199,6 +198,7 @@ in {
       "terminal.integrated.tabs.enabled" = true;
       "vsicons.dontShowNewVersionMessage" = true;
       "workbench.welcomePage.walkthroughs.openOnInstall" = false;
+      "workbench.editor.empty.hint" = "hidden";
       "window.zoomLevel" = 4;
       # Telemetry
       "code-runner.enableAppInsights" = false;
@@ -210,6 +210,7 @@ in {
       "telemetry.enableTelemetry" = false;
       "telemetry.telemetryLevel" = "off";
       "terraform.telemetry.enabled" = false;
+
     };
   };
 
@@ -220,30 +221,24 @@ in {
       git_protocol = "ssh";
       pager = "${pkgs.bat}/bin/bat";
       prompt = "enabled";
-      aliases = {
-        branch = "!git pull && git switch -c nick/PRS-$1";
-        master = "!git switch master && git pull";
-        production = ''
-          !echo "What Jira issues are you releasing to production: " && read JIRA_ISSUES && echo "What is the CMRF you created here: https://hq.agilemd.com/cmrf/new" && read CMRF && gh pr create --base production --reviewer zackliston --assignee zackliston --title "Release $(cat package.json | jq -r .version) $JIRA_ISSUES" --body "CMRF: $CMRF"'';
-      };
     };
   };
   git = {
     enable = true;
-    userName = name;
-    userEmail = email;
     attributes = [ "package-lock.json merge=package-lock" ];
     ignores = [ ".tmp-projections/" "node_modules/" ".DS_Store" ];
-    aliases = {
-      cleanup = "fetch -p";
-      co = "checkout";
-    };
     signing = {
       key = "0AD7F8215DF25741E7DC79F3420226D226E30AF2";
       signByDefault = true;
     };
     lfs = { enable = true; };
-    extraConfig = {
+    settings = {
+      user.name = name;
+      user.email = email;
+      alias = {
+        cleanup = "fetch -p";
+        co = "checkout";
+      };
       init.defaultBranch = "main";
       core.editor = "${pkgs.micro}/bin/micro";
       commit.template = "~/.config/git/template-message";
@@ -273,19 +268,22 @@ in {
       };
       push.autoSetupRemote = true;
     };
-
-    delta = {
-      enable = true;
-      options = {
-        side-by-side = true;
-        plus-color = "#012800";
-        minus-color = "#340001";
-        syntax-theme = "Monokai Extended";
-        colorMoved = "default";
-      };
+  };
+  delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      side-by-side = true;
+      plus-color = "#012800";
+      minus-color = "#340001";
+      syntax-theme = "Monokai Extended";
+      colorMoved = "default";
     };
   };
-  ssh = { enable = true; };
+  ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+  };
   gpg = {
     enable = true;
     settings = { default-key = "0AD7F8215DF25741E7DC79F3420226D226E30AF2"; };
