@@ -3,6 +3,7 @@
 [
   "appcleaner"
   "brave-browser"
+  "ghostty"
   "bitwarden"
   "claude-code"
   "flirc"

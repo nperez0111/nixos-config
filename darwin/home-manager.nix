@@ -59,7 +59,7 @@ in {
   };
   homebrew.prefix = "/opt/homebrew";
   homebrew.brews = pkgs.callPackage ./brews.nix { };
-  homebrew.taps = [ ];
+  homebrew.taps = [ "anomalyco/tap" "marcus/tap" ];
   homebrew.casks = pkgs.callPackage ./casks.nix { };
   # masApps disabled — nix-darwin's mas integration uses `mas get`
   # which was removed in mas 1.8.6+. Install these manually from
@@ -71,6 +71,7 @@ in {
   # Enable home-manager to manage the XDG standard
   home-manager = {
     useGlobalPkgs = true;
+    backupFileExtension = "bak";
     users.${user} = {
       # Disable buggy modules and replace with fixed versions
       # https://github.com/nix-community/home-manager/pull/8164
