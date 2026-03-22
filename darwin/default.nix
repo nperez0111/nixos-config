@@ -1,11 +1,22 @@
-{ config, pkgs, nixpkgs, home-manager, lib, ... }:
+{
+  config,
+  pkgs,
+  nixpkgs,
+  home-manager,
+  lib,
+  ...
+}:
 
 let
   user = "nickthesick";
-  nivSources = import ../nix/sources.nix;
-in {
+in
+{
 
-  imports = [ ../common ../common/cachix ./home-manager.nix ];
+  imports = [
+    ../common
+    ../common/cachix
+    ./home-manager.nix
+  ];
 
   # Set the primary user for nix-darwin
   system.primaryUser = "${user}";
@@ -36,15 +47,16 @@ in {
   };
 
   nixpkgs.overlays = [
-    (import ../overlays/niv-managed-dmg-apps/default.nix {
-      inherit nivSources;
-    })
+    (import ../overlays/niv-managed-dmg-apps/default.nix)
   ];
 
   # Setup user, packages, programs
   nix = {
     package = pkgs.nix;
-    settings.trusted-users = [ "@admin" "${user}" ];
+    settings.trusted-users = [
+      "@admin"
+      "${user}"
+    ];
 
     gc = {
       automatic = true;
@@ -71,17 +83,21 @@ in {
     pkgs.obsidian
     pkgs.nivApps.cemu
     pkgs.nivApps.flirc
-    pkgs.nivApps.skip1s
     pkgs.nivApps.java
   ];
 
-  fonts.packages = with pkgs; [ fira-code hack-font ];
+  fonts.packages = with pkgs; [
+    fira-code
+    hack-font
+  ];
 
   system = {
     stateVersion = 4;
 
     defaults = {
-      LaunchServices = { LSQuarantine = false; };
+      LaunchServices = {
+        LSQuarantine = false;
+      };
 
       NSGlobalDomain = {
         AppleShowAllExtensions = true;
@@ -107,7 +123,9 @@ in {
         tilesize = 48;
       };
 
-      finder = { _FXShowPosixPathInTitle = true; };
+      finder = {
+        _FXShowPosixPathInTitle = true;
+      };
 
       trackpad = {
         Clicking = true;
@@ -164,20 +182,16 @@ in {
           WarnAboutFraudulentWebsites = true;
           WebKitJavaEnabled = false;
           WebKitJavaScriptCanOpenWindowsAutomatically = false;
-          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2TabsToLinks" =
-            true;
-          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" =
-            true;
-          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2BackspaceKeyNavigationEnabled" =
-            false;
-          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaEnabled" =
-            false;
-          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaEnabledForLocalFiles" =
-            false;
-          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaScriptCanOpenWindowsAutomatically" =
-            false;
+          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2TabsToLinks" = true;
+          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" = true;
+          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2BackspaceKeyNavigationEnabled" = false;
+          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaEnabled" = false;
+          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaEnabledForLocalFiles" = false;
+          "com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaScriptCanOpenWindowsAutomatically" = false;
         };
-        "com.apple.AdLib" = { allowApplePersonalizedAdvertising = false; };
+        "com.apple.AdLib" = {
+          allowApplePersonalizedAdvertising = false;
+        };
         "com.apple.print.PrintingPrefs" = {
           # Automatically quit printer app once the print jobs complete
           "Quit When Finished" = true;

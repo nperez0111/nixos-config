@@ -1,6 +1,7 @@
 { pkgs }:
 
-with pkgs; [
+with pkgs;
+[
   bat
   coreutils
   delta
@@ -19,14 +20,12 @@ with pkgs; [
   fastfetch
   ngrok
   nixfmt
-  niv
   oh-my-zsh
   openssh
   pandoc
   ripgrep
   spaceship-prompt
   sqlite
-  ssh-to-pgp
   tmux
   tree
   unrar

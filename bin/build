@@ -2,18 +2,6 @@
 
 VERSION=1.0
 
-# Navigate to the directory of this script
-cd $(dirname $(readlink -f $0))
-cd ..
+cd "$(dirname "$(readlink -f "$0")")/.."
 
-build() {
-    if [ "$(uname)" == "Darwin" ]; then
-       ./bin/darwin-build $@
-    elif [ "$(uname)" == "Linux" ]; then
-       ./bin/nixos-build $@
-    else
-       echo "Unknown platform"
-    fi
-}
-
-build
+./bin/darwin-build $@
