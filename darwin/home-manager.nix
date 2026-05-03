@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   common-programs = import ../common/home-manager.nix {
@@ -8,7 +13,8 @@ let
   };
   common-files = import ../common/files.nix { config = config; };
   user = "nickthesick";
-in {
+in
+{
   imports = [ ./dock ];
 
   # It me
@@ -34,8 +40,7 @@ in {
       options = "--sort name --view grid --display stack";
     }
     {
-      path =
-        "${config.users.users.${user}.home}/Applications/Home Manager Apps";
+      path = "${config.users.users.${user}.home}/Applications/Home Manager Apps";
       options = "--sort name --view grid --display stack";
     }
     {
@@ -59,7 +64,10 @@ in {
   };
   homebrew.prefix = "/opt/homebrew";
   homebrew.brews = pkgs.callPackage ./brews.nix { };
-  homebrew.taps = [ "anomalyco/tap" "marcus/tap" ];
+  homebrew.taps = [
+    "anomalyco/tap"
+    "oven-sh/bun"
+  ];
   homebrew.casks = pkgs.callPackage ./casks.nix { };
   # masApps disabled — nix-darwin's mas integration uses `mas get`
   # which was removed in mas 1.8.6+. Install these manually from
@@ -81,39 +89,47 @@ in {
       ];
       home.enableNixpkgsReleaseCheck = false;
       home.packages = pkgs.callPackage ./packages.nix { };
-      home.file = common-files // import ./files.nix {
-        config = config;
-        pkgs = pkgs;
-        lib = lib;
-      } // (let
-        # Workaround for home-manager pathsToLink bug
-        # https://github.com/nix-community/home-manager/pull/8164
-        hmPackages = config.home-manager.users.${user}.home.packages;
-        appsEnv = pkgs.buildEnv {
-          name = "home-manager-applications";
-          paths = hmPackages;
-          pathsToLink = [ "/Applications" ];
-        };
-        fontsEnv = pkgs.buildEnv {
-          name = "home-manager-fonts";
-          paths = hmPackages;
-          pathsToLink = [ "/share/fonts" ];
-        };
-        homeDir = config.users.users.${user}.home;
-        installDir = "${homeDir}/Library/Fonts/HomeManager";
-      in {
-        "Applications/Home Manager Apps".source =
-          lib.mkForce "${appsEnv}/Applications";
-        "Library/Fonts/.home-manager-fonts-version" = {
-          text = lib.mkForce "${fontsEnv}";
-          onChange = lib.mkForce ''
-            run mkdir -p ${lib.escapeShellArg installDir}
-            run ${pkgs.rsync}/bin/rsync $VERBOSE_ARG -acL --chmod=u+w --delete \
-              ${lib.escapeShellArgs [ "${fontsEnv}/share/fonts/" installDir ]}
-          '';
-        };
-      });
-      home.stateVersion = "21.05";
+      home.file =
+        common-files
+        // import ./files.nix {
+          config = config;
+          pkgs = pkgs;
+          lib = lib;
+        }
+        // (
+          let
+            # Workaround for home-manager pathsToLink bug
+            # https://github.com/nix-community/home-manager/pull/8164
+            hmPackages = config.home-manager.users.${user}.home.packages;
+            appsEnv = pkgs.buildEnv {
+              name = "home-manager-applications";
+              paths = hmPackages;
+              pathsToLink = [ "/Applications" ];
+            };
+            fontsEnv = pkgs.buildEnv {
+              name = "home-manager-fonts";
+              paths = hmPackages;
+              pathsToLink = [ "/share/fonts" ];
+            };
+            homeDir = config.users.users.${user}.home;
+            installDir = "${homeDir}/Library/Fonts/HomeManager";
+          in
+          {
+            "Applications/Home Manager Apps".source = lib.mkForce "${appsEnv}/Applications";
+            "Library/Fonts/.home-manager-fonts-version" = {
+              text = lib.mkForce "${fontsEnv}";
+              onChange = lib.mkForce ''
+                run mkdir -p ${lib.escapeShellArg installDir}
+                run ${pkgs.rsync}/bin/rsync $VERBOSE_ARG -acL --chmod=u+w --delete \
+                  ${lib.escapeShellArgs [
+                    "${fontsEnv}/share/fonts/"
+                    installDir
+                  ]}
+              '';
+            };
+          }
+        );
+      home.stateVersion = "24.11";
       programs = common-programs // { };
 
       # https://github.com/nix-community/home-manager/issues/3344

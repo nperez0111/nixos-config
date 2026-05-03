@@ -8,5 +8,6 @@ let
   systems = [ macmini ];
 in {
   "github".publicKeys = users ++ systems;
+  "opencode".publicKeys = users ++ systems;
   "ssh_pub".publicKeys = users ++ systems;
 }

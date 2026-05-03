@@ -46,9 +46,22 @@ in
     group = "80";
   };
 
+  age.secrets.opencode = {
+    file = ../secrets/opencode;
+    owner = "501";
+    group = "80";
+    path = "/Users/${user}/.config/opencode/opencode.json";
+    symlink = true;
+  };
+
   nixpkgs.overlays = [
     (import ../overlays/niv-managed-dmg-apps/default.nix)
   ];
+
+  # Allow nickthesick to run any command via sudo without a password prompt
+  security.sudo.extraConfig = ''
+    nickthesick ALL=(ALL) NOPASSWD: ALL
+  '';
 
   # Setup user, packages, programs
   nix = {
@@ -74,9 +87,6 @@ in
       experimental-features = nix-command flakes
     '';
   };
-
-  # Turn off NIX_PATH warnings now that we're using flakes
-  system.checks.verifyNixPath = false;
 
   # Load configuration that is shared across systems
   environment.systemPackages = (import ../common/packages.nix { pkgs = pkgs; }) ++ [

@@ -4,6 +4,7 @@
   "anomalyco/tap/opencode"
   "mcfly"
   "direnv"
-  "marcus/tap/nightshift"
+  "node"
+  "oven-sh/bun/bun"
   "projectm"
 ]

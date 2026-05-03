@@ -230,6 +230,7 @@ in {
     signing = {
       key = "0AD7F8215DF25741E7DC79F3420226D226E30AF2";
       signByDefault = true;
+      format = "openpgp";
     };
     lfs = { enable = true; };
     settings = {
@@ -244,12 +245,6 @@ in {
       commit.template = "~/.config/git/template-message";
       commit.gpgsign = true;
       merge.tool = "vscode";
-      pager = {
-        diff = "delta";
-        log = "delta";
-        reflog = "delta";
-        show = "delta";
-      };
       "mergetool \"vscode\"" = {
         cmd = "code --wait --merge $REMOTE $LOCAL $BASE $MERGED";
       };
