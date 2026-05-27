@@ -57,6 +57,11 @@ This is a declarative nix-darwin configuration that manages:
 nix flake update      # Update flake inputs
 ```
 
+## Agent Workflow
+
+- After making configuration changes, run `./bin/build` to apply them. Building is part of the task -- do not leave it for the user unless there is a reason to defer.
+- If the build fails, fix the issue and rebuild.
+
 ## Notes
 - User identity: Nick the Sick <nick@nickthesick.com>
 - GPG key: `0AD7F8215DF25741E7DC79F3420226D226E30AF2`

@@ -5,5 +5,4 @@ let common-packages = import ../common/packages.nix { pkgs = pkgs; };
 in common-packages ++ [
   dockutil
   pinentry_mac
-  skhd
 ]

@@ -66,6 +66,7 @@ in
   homebrew.brews = pkgs.callPackage ./brews.nix { };
   homebrew.taps = [
     "anomalyco/tap"
+    "koekeishiya/formulae"
     "oven-sh/bun"
   ];
   homebrew.casks = pkgs.callPackage ./casks.nix { };
@@ -74,13 +75,14 @@ in
   # the App Store if needed:
   # - Amphetamine (937984704)
   # - Ferromagnetic (1546537151)
-  # - Tailscale (1475387142)
+
+
 
   # Enable home-manager to manage the XDG standard
   home-manager = {
     useGlobalPkgs = true;
     backupFileExtension = "bak";
-    users.${user} = {
+    users.${user} = { lib, ... }: {
       # Disable buggy modules and replace with fixed versions
       # https://github.com/nix-community/home-manager/pull/8164
       disabledModules = [
@@ -130,6 +132,14 @@ in
           }
         );
       home.stateVersion = "24.11";
+      home.activation.fixSshPermissions = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+        run chmod 700 "$HOME/.ssh"
+        if [ -L "$HOME/.ssh/authorized_keys" ]; then
+          src="$(readlink -f "$HOME/.ssh/authorized_keys")"
+          run rm -f "$HOME/.ssh/authorized_keys"
+          run install -m 0600 "$src" "$HOME/.ssh/authorized_keys"
+        fi
+      '';
       programs = common-programs // { };
 
       # https://github.com/nix-community/home-manager/issues/3344

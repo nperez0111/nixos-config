@@ -17,8 +17,7 @@ with pkgs;
   htop
   jq
   micro
-  fastfetch
-  ngrok
+  mosh
   nixfmt
   oh-my-zsh
   openssh

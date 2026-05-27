@@ -21,23 +21,58 @@ in
   # Set the primary user for nix-darwin
   system.primaryUser = "${user}";
 
-  services = {
-    # Setup skhd with configuration
-    skhd = {
-      enable = true;
-      skhdConfig = ''
-        # Youtube Brave
-        cmd + shift + alt - z : osascript -e 'set bravePath to "/Applications/Brave Browser.app"' -e 'tell application "System Events"' -e 'if not (exists process "Brave Browser") then' -e 'do shell script "open -a " & quoted form of bravePath' -e 'delay 3' -e 'end if' -e 'tell application "Brave Browser" to open location "https://youtube.com/tv"' -e 'delay 1' -e 'tell process "Brave Browser"' -e 'set value of attribute "AXFullScreen" of window 1 to true' -e 'end tell' -e 'end tell'
-        # Youtube Orion
-        cmd + shift + alt - y : osascript -e 'set orionPath to "/Applications/Orion.app"' -e 'tell application "System Events"' -e 'if not (exists process "Brave Browser") then' -e 'do shell script "open -a " & quoted form of orionPath' -e 'delay 3' -e 'end if' -e 'tell application "Orion" to open location "https://youtube.com/tv"' -e 'delay 1' -e 'tell process "Orion"' -e 'set value of attribute "AXFullScreen" of window 1 to true' -e 'end tell' -e 'end tell'
-        # Open Stremio
-        cmd + shift + alt - s : osascript -e 'set stremioPath to "/Applications/Stremio.app"' -e 'tell application "System Events"' -e 'if not (exists process "Stremio") then' -e 'do shell script "open -a " & quoted form of stremioPath' -e 'delay 3' -e 'end if' -e 'delay 1' -e 'tell process "stremio"' -e 'set value of attribute "AXFullScreen" of window 1 to true' -e 'end tell' -e 'end tell'
-        # Open Ryujinx
-        cmd + shift + alt - r : osascript -e 'set ryujinxPath to "/Applications/Ryujinx.app"' -e 'tell application "System Events"' -e 'if not (exists process "Ryujinx") then' -e 'do shell script "open -a " & quoted form of ryujinxPath' -e 'delay 3' -e 'end if' -e 'delay 1' -e 'tell process "Ryujinx"' -e 'set value of attribute "AXFullScreen" of window 1 to true' -e 'end tell' -e 'end tell'
-        # Send space if youtube, enter everywhere else
-        cmd + shift + alt - e : osascript -e 'set currentURL to ""' -e 'tell application "System Events"' -e 'set frontAppName to name of first application process whose frontmost is true' -e 'if frontAppName is "Orion" then' -e 'tell application "Orion" to set currentURL to URL of current tab of front window' -e 'else if frontAppName is "Brave Browser" then' -e 'tell application "Brave Browser" to set currentURL to URL of active tab of front window' -e 'end if' -e 'if currentURL contains "youtube.com" then' -e 'tell process frontAppName to keystroke space' -e 'else' -e 'tell process frontAppName to keystroke return' -e 'end if' -e 'end tell'
-      '';
+  # skhd installed via Homebrew (stable binary path) to avoid
+  # macOS re-prompting for Accessibility permissions on every rebuild.
+  # Config is managed via home.file in darwin/files.nix.
+  launchd.user.agents.skhd = {
+    serviceConfig = {
+      ProgramArguments = [ "/opt/homebrew/bin/skhd" ];
+      KeepAlive = true;
+      RunAtLoad = true;
+      ProcessType = "Interactive";
+      EnvironmentVariables.PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
     };
+  };
+
+  # Disable Spotlight indexing — we use Raycast instead.
+  # No built-in nix-darwin module exists, so we use a LaunchDaemon.
+  launchd.daemons.disable-spotlight = {
+    script = ''
+      /usr/bin/mdutil -i off -a
+    '';
+    serviceConfig = {
+      RunAtLoad = true;
+      StartOnMount = true;
+    };
+  };
+
+  # Erase existing Spotlight indexes on activation, and kill unwanted agents.
+  system.activationScripts.postActivation.text = ''
+    # Enable Remote Login (SSH daemon) so WireGuard peers can SSH in
+    /usr/sbin/systemsetup -setremotelogin on >/dev/null 2>&1 || true
+
+    # Spotlight
+    /usr/bin/mdutil -i off -a
+    /usr/bin/mdutil -E -a 2>/dev/null || true
+
+    # Kill Siri and proactive suggestion daemons so they pick up the
+    # disabled preferences immediately (they'll stay dead since we set
+    # the prefs that prevent them from doing real work).
+    for proc in assistantd siriknowledged siriinferenced siriactionsd sirittsd \
+                suggestd parsecd proactived knowledge-agent knowledgeconstructiond \
+                proactiveeventtrackerd duetexpertd biomesyncd BiomeAgent tipsd \
+                spotlightknowledged ContinuityCaptureAgent; do
+      /usr/bin/killall "$proc" 2>/dev/null || true
+    done
+  '';
+
+  # Harden SSH: key-based auth only, no passwords
+  environment.etc."ssh/sshd_config.d/100-nix-darwin.conf" = {
+    text = ''
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      UsePAM no
+    '';
   };
 
   age.secrets.github = {
@@ -198,6 +233,25 @@ in
           "com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaEnabled" = false;
           "com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaEnabledForLocalFiles" = false;
           "com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaScriptCanOpenWindowsAutomatically" = false;
+        };
+        # Disable Siri entirely
+        "com.apple.assistant.support" = {
+          "Siri Data Sharing Opt-In Status" = 2;
+          "Assistant Enabled" = false;
+        };
+        "com.apple.Siri" = {
+          SiriPrefStashedStatusMenuVisible = false;
+          VoiceTriggerUserEnabled = false;
+        };
+        # Disable proactive suggestions and knowledge agents
+        "com.apple.suggestions" = {
+          SuggestionsAllowGelato = false;
+          SuggestionsAllowSiri = false;
+        };
+        # Disable Continuity Camera (iPhone as webcam)
+        "com.apple.cameracaptured" = {
+          "Disabled When Locked" = true;
+          doNotDisturb = true;
         };
         "com.apple.AdLib" = {
           allowApplePersonalizedAdvertising = false;

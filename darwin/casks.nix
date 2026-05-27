@@ -12,7 +12,6 @@
   "keka"
   "multimc"
   "obsidian"
-  "ollama-app"
   "orion"
   "orbstack"
   "raycast"

@@ -278,6 +278,14 @@ in {
   ssh = {
     enable = true;
     enableDefaultConfig = false;
+    matchBlocks = {
+      bastion = {
+        hostname = "49.13.238.125";
+        user = "root";
+        identityFile = "~/.ssh/id_rsa";
+        identitiesOnly = true;
+      };
+    };
   };
   gpg = {
     enable = true;
