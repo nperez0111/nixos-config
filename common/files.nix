@@ -20,7 +20,7 @@
   ".config/gh/hosts.yml".text = ''
     github.com:
       users:
-        nickthesick:
+        nperez0111:
             oauth_token: "${
               builtins.replaceStrings [ "\n" ] [ "" ] (builtins.readFile config.age.secrets.github.path)
             }"
@@ -28,6 +28,6 @@
       oauth_token: "${
         builtins.replaceStrings [ "\n" ] [ "" ] (builtins.readFile config.age.secrets.github.path)
       }"
-      user: nickthesick
+      user: nperez0111
   '';
 }

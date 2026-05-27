@@ -14,12 +14,9 @@
     (i: "_nixbld${toString i} ALL=(ALL) NOPASSWD:ALL")
     (lib.range 1 config.nix.nrBuildUsers);
 
-  ".gnupg/gpg-agent.conf".text = ''
-    pinentry-program ${pkgs.pinentry_mac}/bin/pinentry-mac
-    default-cache-ttl 10000
-    max-cache-ttl 120000
-    default-cache-ttl-ssh 10000
-    max-cache-ttl-ssh 10000
+  # SSH allowed signers for git commit verification
+  ".config/git/allowed_signers".text = ''
+    nick@nickthesick.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDz0bAXfQclIXShHgYYsPS2Xzzkq0/7Am47M2APWzVqOnX7rIqSbcqdQ0g1E0zF5fWsHjJlQLCrHGAoKa+YXQL8pmRnsa7wdx//s+8MrrMQg744qokYPwP6cIhK0edYUgUIGLCPyducsrGA4Vjexn6+tx5SygP3gDfO+lp2BLxZaTQEpkfKeysp5iU3BybQB1EhXmdjVNhxdAun7YTYjbzVp1KNcXraSdDEt75x/SkcRVJEHTExjiPo23Q62aS5H9r1TX6Se0pZvcTURv8trBesxVX5WqmxpKCCc82m/cHbvyZIwmEXEQGuljXiXwpZ1+HOHIcg5XtP0LBjtc1mlNTkRADUT6oZ1P8ycXOTfXL+zwwYNQmJrztWYzU8xt2xQRPjGZTavoR7Qe6vDGOkHnzb8ghnFVZo6itwNz6mxCdhv6fi8wvsGBh+seFmxsxh5i2GOuVWFoOymLK7JAur3vo5QnTu9rv3TsiSM2FTnX6s1GlF9I3VwweMdkNTy0PnwgU= nickthesick@nickthesicks-Mac-mini.local
   '';
 
   # skhd hotkey configuration (skhd installed via Homebrew for stable binary path)

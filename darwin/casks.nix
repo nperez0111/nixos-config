@@ -7,7 +7,6 @@
   "bitwarden"
   "claude-code"
   "flirc"
-  "gpg-suite-no-mail"
   "dolphin"
   "keka"
   "multimc"

@@ -228,9 +228,9 @@ in {
     attributes = [ "package-lock.json merge=package-lock" ];
     ignores = [ ".tmp-projections/" "node_modules/" ".DS_Store" ];
     signing = {
-      key = "0AD7F8215DF25741E7DC79F3420226D226E30AF2";
+      key = "~/.ssh/id_rsa.pub";
       signByDefault = true;
-      format = "openpgp";
+      format = "ssh";
     };
     lfs = { enable = true; };
     settings = {
@@ -254,6 +254,7 @@ in {
         recursive = "binary";
       };
 
+      gpg.ssh.allowedSignersFile = "~/.config/git/allowed_signers";
       pull.rebase = true;
       fetch.prune = true;
       rebase.autoStash = true;
@@ -288,8 +289,7 @@ in {
     };
   };
   gpg = {
-    enable = true;
-    settings = { default-key = "0AD7F8215DF25741E7DC79F3420226D226E30AF2"; };
+    enable = false;
   };
   tmux = {
     enable = true;
