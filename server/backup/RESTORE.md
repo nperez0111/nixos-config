@@ -2,8 +2,12 @@
 
 The `backup` stack on **bastion** ships Docker volume contents to Backblaze B2
 with [restic](https://restic.net/). This document is the runbook for getting
-data back out. It has been exercised at least once against the live repository —
-if you change the backup script, exercise it again.
+data back out.
+
+**Last exercised: 2026-08-13** — full restore of snapshot `7090c56c`, 5462
+files / 2.315 GiB in 16s; `PRAGMA integrity_check` returned `ok` on all seven
+sampled databases and 72/72 epubs plus 68/68 covers were byte-valid. If you
+change the backup script, exercise this runbook again and update that line.
 
 ---
 
@@ -49,16 +53,32 @@ cannot damage live data.
 ```sh
 ssh bastion
 
+# Lift the credentials off the running backup container.
+docker inspect backup --format '{{range .Config.Env}}{{println .}}{{end}}' \
+  | grep -E '^(RESTIC_|AWS_)' > /tmp/restic.env
+
+mkdir -p /var/tmp/restore
+
 docker run --rm -it \
   --network backbone \
-  --env-file <(docker inspect backup \
-    --format '{{range .Config.Env}}{{println .}}{{end}}' \
-    | grep -E '^(RESTIC_|AWS_)') \
-  -v restic_cache:/cache \
+  --env-file /tmp/restic.env \
+  -v backup_restic_cache:/cache \
   -v /var/tmp/restore:/restore \
   ghcr.io/nperez0111/nixos-config-backup:main \
   sh
 ```
+
+Two things that will bite you if you improvise:
+
+- The cache volume is `backup_restic_cache`, not `restic_cache` — compose
+  prefixes it with the stack name. Getting it wrong is harmless but means
+  re-downloading the whole repository index.
+- The image sets `ENTRYPOINT []`, so any command you pass must start with
+  `restic` (e.g. `... nixos-config-backup:main restic snapshots`). The upstream
+  `restic/restic` image does *not* behave this way.
+
+Delete `/tmp/restic.env` when you are done — it contains the repository
+password in plaintext.
 
 If the `backup` container is gone, set the four variables by hand instead —
 they are on the `backup` stack in Portainer (bastion, endpoint `2761600`):

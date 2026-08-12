@@ -18,7 +18,7 @@ This is a declarative nix-darwin configuration that manages:
 | `overlays/` | Custom nixpkgs overlays for DMG apps |
 | `bin/` | Build scripts |
 | `secrets/` | Age-encrypted secrets (agenix) |
-| `server/` | Server/docker compose files and backups |
+| `server/` | Server tooling: caddy image + `caddy-manage`, restic backup image |
 | `configs/` | Game configs (dolphin, ryujinx, etc.) |
 
 ## Finding Things
@@ -46,6 +46,20 @@ This is a declarative nix-darwin configuration that manages:
 ### Secrets (agenix)
 - `secrets/secrets.nix` - Secret definitions
 - `secrets/github` - GitHub token (age-encrypted)
+
+### Server / Docker images
+Note `.gitignore` has `server/*`, so new files under `server/` are invisible to
+git unless the directory is un-ignored (`!server/backup/`) or force-added.
+
+- `server/caddy/Dockerfile` - Caddy + cloudflare DNS plugin
+- `server/caddy-manage` - Caddyfile read/write/deploy tool (`caddy-manage help`)
+- `server/backup/` - restic offsite backup of bastion Docker volumes to B2
+  - **[`server/backup/RESTORE.md`](server/backup/RESTORE.md) - restore runbook, read this first**
+  - [`server/backup/MONITORING.md`](server/backup/MONITORING.md) - OpenObserve alert setup
+  - `run-backup.sh` (`init|backup|prune|check`), `crontab`, `excludes`, `Dockerfile`
+- `.github/workflows/docker-build.yml` - matrix build of both images to GHCR as
+  `ghcr.io/nperez0111/nixos-config-{caddy,backup}:main`. Adding an image means
+  creating `server/<name>/Dockerfile` and adding `<name>` to `matrix.image`.
 
 ## Important Users
 - Darwin: `nickthesick`
