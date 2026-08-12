@@ -1,0 +1,6 @@
+# Times are local to $TZ (Europe/Amsterdam).
+#
+# min hour dom mon dow  command
+0    4    *   *   *     /usr/local/bin/run-backup.sh backup
+30   5    *   *   0     /usr/local/bin/run-backup.sh prune
+0    6    1   *   *     /usr/local/bin/run-backup.sh check

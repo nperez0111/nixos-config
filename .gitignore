@@ -3,6 +3,7 @@
 result
 common/config/emacs/Emacs.el
 server/*
+!server/backup/
 configs/*
 NOTES.md
 config.zip

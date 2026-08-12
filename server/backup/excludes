@@ -1,0 +1,37 @@
+# restic exclude patterns.
+#
+# The backup covers two roots:
+#   /staging  consistent SQLite snapshots produced by run-backup.sh  -> keep everything
+#   /src      the live volumes, read-only                            -> keep only non-database files
+#
+# Every pattern below is therefore anchored to /src. An unanchored pattern like
+# "*.sqlite" would match by basename anywhere and would silently exclude the
+# snapshots in /staging, i.e. back up nothing of value.
+#
+# Both the /src/*/ and /src/**/ forms are listed because restic's "**" handling
+# of zero intermediate components has changed between versions.
+
+/src/*/*.sqlite
+/src/**/*.sqlite
+/src/*/*.sqlite-wal
+/src/**/*.sqlite-wal
+/src/*/*.sqlite-shm
+/src/**/*.sqlite-shm
+/src/*/*.sqlite3
+/src/**/*.sqlite3
+/src/*/*.db
+/src/**/*.db
+/src/*/*.db-wal
+/src/**/*.db-wal
+/src/*/*.db-shm
+/src/**/*.db-shm
+/src/*/*-journal
+/src/**/*-journal
+
+# 1.5 GB stale one-off copy taken before bookhive PR #197. Not matched by the
+# patterns above because the extension is not .sqlite.
+/src/bookhive_data/db.sqlite.pre197
+
+# Scratch directories.
+/src/bookhive_social_data/temp
+/src/catnip_data/tmp
