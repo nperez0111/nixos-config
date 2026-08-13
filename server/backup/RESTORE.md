@@ -244,6 +244,28 @@ full rebuild of bastion needs those too, and they are a separate problem.
 
 ## 7. Troubleshooting
 
+**No snapshots are being created, but the container says `Up` and logs nothing**
+Check `docker logs backup` for:
+
+```
+crond: can't set groups: Operation not permitted
+```
+
+The stack is missing `SETGID`. Busybox `crond` calls `setgroups()` in the forked
+child before `exec`, and that syscall requires `CAP_SETGID` even when the process
+is already root and the target gid is 0. Without it the child dies before the job
+body ever runs, the parent still logs its `USER root pid N cmd ...` line, and the
+container looks perfectly healthy while backing up nothing. `cap_add` must be:
+
+```yaml
+cap_add:
+  - DAC_OVERRIDE   # create the sqlite -shm file in 1000:1000-owned volumes
+  - SETGID         # let crond spawn jobs
+```
+
+`SETUID` is not needed — `setuid(0)` from euid 0 is permitted uncapped. This is
+easy to lose because the compose exists only in Portainer's database, not in git.
+
 **`Fatal: unable to open config file` / `repository does not exist`**
 Wrong `RESTIC_REPOSITORY`, wrong credentials, or the key lost access to the
 bucket. Confirm with `restic cat config`.
