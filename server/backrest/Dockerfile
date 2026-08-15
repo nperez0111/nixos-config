@@ -25,7 +25,14 @@ RUN apk add --no-cache sqlite postgresql18-client mariadb-client jq
 
 COPY server/backrest/dump-databases.sh /usr/local/bin/dump-databases.sh
 
-RUN chmod +x /usr/local/bin/dump-databases.sh
+# Active staleness / retention monitoring. backrest's hook Condition enum has no
+# "a backup did not run" event and structurally cannot -- hooks only fire from
+# inside a running task. The repo-level CONDITION_ANY_ERROR hooks cover every
+# failure; this script covers absence, which is how the old bastion crond died
+# silently. It needs only curl/restic/jq, all already present above.
+COPY server/backrest/alert-check.sh /usr/local/bin/alert-check.sh
+
+RUN chmod +x /usr/local/bin/dump-databases.sh /usr/local/bin/alert-check.sh
 
 # No ENTRYPOINT/CMD override: backrest must still start exactly as it does in
 # the base image. This layer only adds tools next to it.
