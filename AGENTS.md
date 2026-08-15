@@ -18,7 +18,7 @@ This is a declarative nix-darwin configuration that manages:
 | `overlays/` | Custom nixpkgs overlays for DMG apps |
 | `bin/` | Build scripts |
 | `secrets/` | Age-encrypted secrets (agenix) |
-| `server/` | Server tooling: caddy image + `caddy-manage`, restic backup image |
+| `server/` | Server tooling: caddy image + `caddy-manage`, backrest backup image |
 | `configs/` | Game configs (dolphin, ryujinx, etc.) |
 
 ## Finding Things
@@ -49,17 +49,31 @@ This is a declarative nix-darwin configuration that manages:
 
 ### Server / Docker images
 Note `.gitignore` has `server/*`, so new files under `server/` are invisible to
-git unless the directory is un-ignored (`!server/backup/`) or force-added.
+git unless the directory is un-ignored (`!server/backrest/`) or force-added.
+`server/caddy/Dockerfile` is tracked despite not being un-ignored, because
+already-tracked files are unaffected by `.gitignore`.
 
 - `server/caddy/Dockerfile` - Caddy + cloudflare DNS plugin
 - `server/caddy-manage` - Caddyfile read/write/deploy tool (`caddy-manage help`)
-- `server/backup/` - restic offsite backup of bastion Docker volumes to B2
-  - **[`server/backup/RESTORE.md`](server/backup/RESTORE.md) - restore runbook, read this first**
-  - [`server/backup/MONITORING.md`](server/backup/MONITORING.md) - OpenObserve alert setup
-  - `run-backup.sh` (`init|backup|prune|check`), `crontab`, `excludes`, `Dockerfile`
+- `server/backrest/` - the backup system for **both** hosts (macmini + bastion)
+  - `Dockerfile` - backrest + restic + sqlite3 + pg_dump/mariadb-dump + jq/curl
+  - `dump-databases.sh` - `SNAPSHOT_START` hook; writes consistent DB dumps to
+    `/staging`. Driven by `SQLITE_SCAN_ROOTS`, `SQLITE_DB_ROOTS`, `PG_*`,
+    `MYSQL_*`, `PORTAINER_*` env vars set on the Portainer stack.
+  - `alert-check.sh` - `SNAPSHOT_END` hook; staleness / retention monitoring.
+  - **Operational runbook (restore procedure, alerting, gotchas) lives in
+    `~/AGENTS.md` under "Offsite Backups", not here.**
 - `.github/workflows/docker-build.yml` - matrix build of both images to GHCR as
-  `ghcr.io/nperez0111/nixos-config-{caddy,backup}:main`. Adding an image means
-  creating `server/<name>/Dockerfile` and adding `<name>` to `matrix.image`.
+  `ghcr.io/nperez0111/nixos-config-{caddy,backrest}:main`. Adding an image means
+  creating `server/<name>/Dockerfile`, adding `<name>` to `matrix.image`, and
+  adding `!server/<name>/` to `.gitignore`.
+
+> **Retired 2026-08-15:** `server/backup/` (the bastion-only restic + busybox
+> `crond` image, Portainer stack 88, `ghcr.io/nperez0111/nixos-config-backup`)
+> was deleted after bastion was migrated to backrest and a restore drill passed
+> on both hosts. Do not resurrect its `cap_add: [DAC_OVERRIDE, SETGID]` workaround
+> — that was a busybox-crond requirement; backrest uses an in-process Go
+> scheduler and needs no added capabilities.
 
 ## Important Users
 - Darwin: `nickthesick`

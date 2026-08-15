@@ -3,7 +3,6 @@
 result
 common/config/emacs/Emacs.el
 server/*
-!server/backup/
 !server/backrest/
 configs/*
 NOTES.md

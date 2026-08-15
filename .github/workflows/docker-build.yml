@@ -26,9 +26,10 @@ jobs:
       matrix:
         # Each entry builds ./server/<image>/Dockerfile and publishes
         # ghcr.io/<repo>-<image>.
-        # `backup` stays until bastion has been migrated to backrest and
-        # verified; it is the fallback path.
-        image: [caddy, backup, backrest]
+        # `backup` was removed 2026-08-15: bastion is fully migrated to backrest
+        # and the restore drill passed on both hosts, so the old restic/crond
+        # fallback (Portainer stack 88) was retired along with server/backup/.
+        image: [caddy, backrest]
     permissions:
       contents: read
       packages: write
