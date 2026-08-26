@@ -5,7 +5,7 @@ FROM ghcr.io/getpaseo/paseo:latest
 # image's expectation.
 USER root
 RUN apt-get update \
- && apt-get install -y --no-install-recommends curl gpg ripgrep fd-find \
+ && apt-get install -y --no-install-recommends curl gpg unzip ripgrep fd-find \
  && ln -s "$(command -v fdfind)" /usr/local/bin/fd \
  && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
       | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
