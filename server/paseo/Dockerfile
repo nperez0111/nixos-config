@@ -17,7 +17,7 @@ RUN apt-get update \
 RUN npm install -g @anthropic-ai/claude-code opencode-ai vite-plus
 ENV BUN_INSTALL=/usr/local
 RUN curl -fsSL https://bun.sh/install | bash
-ENV CARGO_HOME=/usr/local
+ENV UV_INSTALL_DIR=/usr/local/bin
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # npm install -g can create directories under /home/paseo owned by root (e.g.
