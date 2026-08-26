@@ -29,7 +29,7 @@ jobs:
         # `backup` was removed 2026-08-15: bastion is fully migrated to backrest
         # and the restore drill passed on both hosts, so the old restic/crond
         # fallback (Portainer stack 88) was retired along with server/backup/.
-        image: [caddy, backrest]
+        image: [caddy, backrest, paseo]
     permissions:
       contents: read
       packages: write

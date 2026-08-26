@@ -4,6 +4,7 @@ result
 common/config/emacs/Emacs.el
 server/*
 !server/backrest/
+!server/paseo/
 configs/*
 NOTES.md
 config.zip
