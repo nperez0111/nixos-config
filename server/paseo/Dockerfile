@@ -5,3 +5,8 @@ FROM ghcr.io/getpaseo/paseo:latest
 # image's expectation.
 USER root
 RUN npm install -g @anthropic-ai/claude-code opencode-ai
+
+# npm install -g can create directories under /home/paseo owned by root (e.g.
+# .local/share/opencode/). The entrypoint drops to uid 1000, so fix ownership
+# now to avoid PermissionDenied errors at runtime.
+RUN chown -R 1000:1000 /home/paseo
