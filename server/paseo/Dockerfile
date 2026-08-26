@@ -5,7 +5,8 @@ FROM ghcr.io/getpaseo/paseo:latest
 # image's expectation.
 USER root
 RUN apt-get update \
- && apt-get install -y --no-install-recommends curl gpg \
+ && apt-get install -y --no-install-recommends curl gpg ripgrep fd-find \
+ && ln -s "$(command -v fdfind)" /usr/local/bin/fd \
  && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
       | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
@@ -13,7 +14,7 @@ RUN apt-get update \
  && apt-get update \
  && apt-get install -y --no-install-recommends gh \
  && rm -rf /var/lib/apt/lists/*
-RUN npm install -g @anthropic-ai/claude-code opencode-ai \
+RUN npm install -g @anthropic-ai/claude-code opencode-ai vite-plus \
  && curl -fsSL https://bun.sh/install | bash \
  && ln -s /root/.bun/bin/bun /usr/local/bin/bun \
  && ln -s /root/.bun/bin/bunx /usr/local/bin/bunx \
