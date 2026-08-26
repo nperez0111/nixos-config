@@ -14,9 +14,11 @@ RUN apt-get update \
  && apt-get update \
  && apt-get install -y --no-install-recommends gh \
  && rm -rf /var/lib/apt/lists/*
-RUN npm install -g @anthropic-ai/claude-code opencode-ai vite-plus \
- && BUN_INSTALL=/usr/local curl -fsSL https://bun.sh/install | bash \
- && CARGO_HOME=/usr/local curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN npm install -g @anthropic-ai/claude-code opencode-ai vite-plus
+ENV BUN_INSTALL=/usr/local
+RUN curl -fsSL https://bun.sh/install | bash
+ENV CARGO_HOME=/usr/local
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # npm install -g can create directories under /home/paseo owned by root (e.g.
 # .local/share/opencode/). The entrypoint drops to uid 1000, so fix ownership
