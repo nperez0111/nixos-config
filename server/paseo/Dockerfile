@@ -47,5 +47,7 @@ RUN mkdir -p /home/paseo/.paseo /home/paseo/.claude /home/paseo/.codex \
              /home/paseo/.local/state /home/paseo/.cache
 
 # Override the entrypoint to skip gosu; run the server directly as root.
+# /etc/paseo-server-entry is a text file containing the real JS entry path,
+# not a JS file itself. The original entrypoint does `entry="$(cat ...)"`.
 ENTRYPOINT []
-CMD ["node", "/etc/paseo-server-entry"]
+CMD ["sh", "-c", "exec node \"$(cat /etc/paseo-server-entry)\""]
