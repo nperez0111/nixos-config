@@ -1,9 +1,7 @@
 FROM ghcr.io/getpaseo/paseo:latest
 
-# Run everything as root. The base image's entrypoint drops to uid 1000 via
-# gosu, which causes endless permission problems with tools that write to
-# /home/paseo (npm cache, opencode XDG dirs, bun cache, etc.). Overriding
-# the entrypoint to run the node server directly as root sidesteps all of it.
+# Install tools as root, then grant paseo passwordless sudo so agents can
+# escalate when needed (e.g. apt install) without running the daemon as root.
 USER root
 
 # System packages: dev tools + GitHub CLI from its official apt repo.
@@ -19,6 +17,10 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends gh \
  && rm -rf /var/lib/apt/lists/*
 
+# Grant paseo user passwordless sudo.
+RUN echo "paseo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/paseo \
+ && chmod 0440 /etc/sudoers.d/paseo
+
 # Coding agent CLIs + dev tooling.
 RUN npm install -g @anthropic-ai/claude-code opencode-ai vite-plus
 ENV BUN_INSTALL=/usr/local
@@ -26,28 +28,12 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV UV_INSTALL_DIR=/usr/local/bin
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Replicate the env vars from the base entrypoint so the server and agents
-# find their config/cache/state directories in the right places.
-ENV HOME=/home/paseo \
-    PASEO_HOME=/home/paseo/.paseo \
-    PASEO_LISTEN=0.0.0.0:6767 \
-    PASEO_WEB_UI_ENABLED=true \
-    PASEO_LOG_LEVEL=info \
-    PASEO_LOG_FORMAT=json \
-    CLAUDE_CONFIG_DIR=/home/paseo/.claude \
-    CODEX_HOME=/home/paseo/.codex \
-    XDG_CONFIG_HOME=/home/paseo/.config \
-    XDG_DATA_HOME=/home/paseo/.local/share \
-    XDG_STATE_HOME=/home/paseo/.local/state \
-    XDG_CACHE_HOME=/home/paseo/.cache
+# Fix ownership of anything npm/bun/uv created under /home/paseo during build.
+RUN chown -R 1000:1000 /home/paseo
 
-# Create all the directories the entrypoint would have created.
-RUN mkdir -p /home/paseo/.paseo /home/paseo/.claude /home/paseo/.codex \
-             /home/paseo/.config /home/paseo/.local/share \
-             /home/paseo/.local/state /home/paseo/.cache
+# Tell git to trust all directories (the bind-mounted /workspace comes from
+# macOS with different uid mapping; without this, git refuses to operate).
+RUN git config --system --add safe.directory '*'
 
-# Override the entrypoint to skip gosu; run the server directly as root.
-# /etc/paseo-server-entry is a text file containing the real JS entry path,
-# not a JS file itself. The original entrypoint does `entry="$(cat ...)"`.
-ENTRYPOINT []
-CMD ["sh", "-c", "exec node \"$(cat /etc/paseo-server-entry)\""]
+# Use the original entrypoint — it sets up env vars, creates dirs, and drops
+# to the paseo user via gosu. No ENTRYPOINT/CMD override needed.
