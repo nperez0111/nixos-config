@@ -8,6 +8,7 @@ USER root
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       curl gpg unzip ripgrep fd-find python3 sudo micro ca-certificates \
+      jq rsync \
  && ln -s "$(command -v fdfind)" /usr/local/bin/fd \
  && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
       | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
