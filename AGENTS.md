@@ -63,6 +63,9 @@ already-tracked files are unaffected by `.gitignore`.
   - `alert-check.sh` - `SNAPSHOT_END` hook; staleness / retention monitoring.
   - **Operational runbook (restore procedure, alerting, gotchas) lives in
     `~/AGENTS.md` under "Offsite Backups", not here.**
+  - iCloud Photos backup (attic) is separate from backrest: upgrade procedure in
+    `darwin/attic/README.md`, alert runbook in `~/AGENTS.md` under "iCloud Photos
+    Backup".
 - `.github/workflows/docker-build.yml` - matrix build of both images to GHCR as
   `ghcr.io/nperez0111/nixos-config-{caddy,backrest}:main`. Adding an image means
   creating `server/<name>/Dockerfile`, adding `<name>` to `matrix.image`, and
