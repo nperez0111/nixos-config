@@ -10,6 +10,39 @@
 let
   user = "nickthesick";
 
+  # attic - iCloud Photos -> S3 backup. See overlays/attic/default.nix for the
+  # pinned version and the post-upgrade keychain re-trust ritual.
+  attic = "${pkgs.attic-photos}/bin/attic";
+
+  # Failure + staleness mailer, sharing backrest's single SMTP credential.
+  # nounset only: errexit in a notifier is actively harmful, since a benign
+  # non-zero (e.g. a `[ -f ]` miss) would abort the script before it mails.
+  attic-notify = pkgs.writeShellApplication {
+    name = "attic-notify";
+    runtimeInputs = [ pkgs.jq pkgs.curl pkgs.coreutils ];
+    bashOptions = [ "nounset" ];
+    text = builtins.readFile ./attic/attic-notify.sh;
+  };
+
+  # /usr/local/bin holds the OrbStack `docker` shim, which attic-notify needs
+  # to read the SMTP credential out of the backrest container.
+  atticPath = "${pkgs.attic-photos}/bin:${attic-notify}/bin:/run/current-system/sw/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+
+  atticLogDir = "/Users/${user}/Library/Logs/attic";
+
+  # Shared launchd shape for every attic job. Background/LowPriorityIO/Nice so a
+  # multi-hour iCloud drain never competes with anything interactive.
+  atticJob = name: extra: {
+    serviceConfig = {
+      EnvironmentVariables.PATH = atticPath;
+      RunAtLoad = false;
+      ProcessType = "Background";
+      LowPriorityIO = true;
+      Nice = 5;
+      StandardOutPath = "${atticLogDir}/${name}.log";
+      StandardErrorPath = "${atticLogDir}/${name}.log";
+    } // extra;
+  };
 in
 {
 
@@ -54,6 +87,80 @@ in
     serviceConfig = {
       RunAtLoad = true;
     };
+  };
+
+  # ---------------------------------------------------------------- attic
+  # iCloud Photos -> Backblaze B2. These MUST be user agents, not daemons: a
+  # LaunchDaemon runs as root outside any user session, so it has no login
+  # keychain (S3 credentials) and no Photos TCC grant, and PhotoKit is
+  # unavailable. Upstream documents this - see docs/unattended-backups.md
+  # "Why a LaunchAgent and not a Daemon or cron".
+  #
+  # No `pmset repeat wakeorpoweron` is needed: this mini runs `pmset sleep 0`.
+
+  # 09:00 daily. Every slot nearer "overnight" collides with a backrest plan
+  # (03:19, 05:47, 14:13, 17:23, 21:07, 23:37) or nix GC (Sun 02:00); 09:00-14:00
+  # is the only genuinely empty window, and the mini is headless so the hour
+  # costs nothing.
+  #
+  # --limit 2000 keeps each run to roughly 1-2h. The cap is per-run, not
+  # per-day: attic is idempotent, skips what is already in the manifest, and
+  # resumes failures from its retry queue, so the ~9.7k-asset first catch-up
+  # just takes several runs. Raise or drop it once caught up.
+  launchd.user.agents.attic-backup = atticJob "backup" {
+    # attic MUST be launchd's direct program, not wrapped in a shell script.
+    # TCC attributes the Photos request to the process launchd started, so a
+    # wrapper makes the nix-store bash the "responsible" process and macOS
+    # prompts to grant Photos access to *bash* - which hangs the backup
+    # indefinitely. Outcome is read afterwards by attic-notify via launchd's
+    # own `last exit code`, so no wrapper is needed. Verified 2026-08-28.
+    ProgramArguments = [
+      attic
+      "backup"
+      "--limit"
+      "2000"
+    ];
+    StartCalendarInterval = [{
+      Hour = 9;
+      Minute = 0;
+    }];
+  };
+
+  # Weekly integrity check: confirms every manifest entry still exists in S3.
+  # Sunday 07:00 - clear of nix GC (Sun 02:00) and the monthly backrest prune.
+  launchd.user.agents.attic-verify = atticJob "verify" {
+    ProgramArguments = [ attic "verify" ];
+    StartCalendarInterval = [{
+      Weekday = 0;
+      Hour = 7;
+      Minute = 0;
+    }];
+  };
+
+  # The failure hook above only fires from inside a run, so it is silent when
+  # attic stops running at all. This is the layer that catches that - same gap,
+  # and same reasoning, as server/backrest/alert-check.sh. It reads the success
+  # reads launchd's `last exit code` for the backup job plus its log mtime.
+  launchd.user.agents.attic-check = atticJob "check" {
+    ProgramArguments = [ "${attic-notify}/bin/attic-notify" "check" ];
+    StartCalendarInterval = [{
+      Hour = 12;
+      Minute = 0;
+    }];
+  };
+
+  # Manual only - no StartCalendarInterval. `attic status` touches both the
+  # Photos library and both keychain items and returns in seconds, so
+  # kickstarting this is how permissions get primed and re-trusted:
+  #   launchctl kickstart -k gui/$(id -u)/org.nixos.attic-prime
+  #
+  # It must be kickstarted rather than run in Terminal. TCC attributes a CLI
+  # tool's Photos grant to the *responsible process*; run interactively from
+  # Terminal.app the grant can land on Terminal, leaving the launchd-spawned
+  # binary without access - which presents only as "0 uploaded, 0 failed".
+  # Under launchd, attic itself is the responsible process.
+  launchd.user.agents.attic-prime = atticJob "prime" {
+    ProgramArguments = [ attic "status" ];
   };
 
   # Disable Spotlight indexing — we use Raycast instead.
@@ -138,6 +245,11 @@ in
     # Enable Remote Login (SSH daemon) so WireGuard peers can SSH in
     /usr/sbin/systemsetup -setremotelogin on >/dev/null 2>&1 || true
 
+    # launchd does not create the parent of StandardOutPath - it silently fails
+    # to start the job instead. The attic agents all log into this directory.
+    /bin/mkdir -p ${atticLogDir}
+    /usr/sbin/chown ${user}:staff ${atticLogDir} 2>/dev/null || true
+
     # Spotlight: set ExternalVolumesIgnore so mds ignores USB/external drives
     /usr/bin/defaults write /Library/Preferences/com.apple.SpotlightServer.plist \
       ExternalVolumesIgnore -bool true
@@ -190,6 +302,7 @@ in
   nixpkgs.overlays = [
     (import ../overlays/niv-managed-dmg-apps/default.nix)
     (import ../overlays/pigeons/default.nix)
+    (import ../overlays/attic/default.nix)
   ];
 
   # Allow nickthesick to run any command via sudo without a password prompt
@@ -229,6 +342,8 @@ in
     pkgs.nivApps.flirc
     pkgs.nivApps.java
     pkgs.pigeons
+    pkgs.attic-photos
+    attic-notify
   ];
 
   fonts.packages = with pkgs; [
