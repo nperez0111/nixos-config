@@ -141,6 +141,24 @@ in
           run install -m 0600 "$src" "$HOME/.ssh/authorized_keys"
         fi
       '';
+
+      # Same problem as authorized_keys above: home.file installs a symlink into
+      # the nix store, Homebrew resolves it, sees a root-owned parent directory
+      # and aborts the whole switch with
+      #   Error: Refusing to write insecure trust store: target directory
+      #   /nix/store/...-home-manager-files/.homebrew is not owned by the current user
+      # so the trust store has to be a real, user-owned file.
+      #
+      # Note the ordering this relies on: nix-darwin runs the Homebrew step
+      # BEFORE home-manager activation, so each switch consumes the real file
+      # written by the previous switch, and this step rewrites it for the next.
+      home.activation.fixHomebrewTrust = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+        if [ -L "$HOME/.homebrew/trust.json" ]; then
+          src="$(readlink -f "$HOME/.homebrew/trust.json")"
+          run rm -f "$HOME/.homebrew/trust.json"
+          run install -m 0644 "$src" "$HOME/.homebrew/trust.json"
+        fi
+      '';
       programs = common-programs // { };
 
       # https://github.com/nix-community/home-manager/issues/3344
