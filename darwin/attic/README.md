@@ -11,6 +11,7 @@ Nightly backup of the Photos library. Deployed 2026-08-28, currently on
 | Credentials | macOS login keychain, services `attic-s3-access-key` / `attic-s3-secret-key`, account `attic` |
 | Bucket | `attic-backup-nickthesick-com` at `s3.us-west-000.backblazeb2.com`, path-style |
 | Logs | `~/Library/Logs/attic/{backup,verify,check,prime}.log` |
+| Photos library | `/Volumes/Photos/Photos Library.photoslibrary` — **not** the internal disk (moved 2026-08-28) |
 
 Operational runbook (what to do when it alerts) is in `~/AGENTS.md` on the
 macmini, under "iCloud Photos Backup". This file is the **upgrade** procedure.
@@ -44,6 +45,19 @@ both. Symptoms: `Failed to read keychain item`, or a run that reports
 
 ## Storage behaviour
 
+The System Photo Library lives on **`/Volumes/Photos`**, a case-insensitive
+APFS volume sharing the `dockman` container (`disk7`) with Docker and Seafile —
+moved off the internal SSD on 2026-08-28 to stop the catch-up eating the boot
+volume. APFS case sensitivity is per-volume, so it coexists with the
+case-sensitive `dockman`; Photos cannot use a case-sensitive volume. The volume
+has `Owners: Enabled` (Photos requires it) and a 250 GB quota so a runaway
+library cannot starve the containers sharing the pool.
+
+attic follows the *System* Photo Library, so it needed no reconfiguration — but
+if the library is ever moved again, "Use as System Photo Library" in Photos'
+settings is the step that matters. Its Photos TCC grant is keyed to the binary,
+not the library path, so a move does not require re-priming.
+
 The library is on "Optimize Mac Storage", so originals live in iCloud, not on
 disk. attic pulls each one through PhotoKit, uploads it, and deletes its own
 copy — but macOS *retains* what it downloaded and only evicts lazily under disk
@@ -59,10 +73,20 @@ Sizing, measured 2026-08-28 from the first 249 assets (187 photos averaging
 share: **≈67 GB** for all 9,573 assets. Free space at deploy was 102 GB.
 
 **Decided 2026-08-28: no free-space guard.** Evicting under pressure is exactly
-what Optimize Mac Storage is for, and 67 GB fits the available space. This is a
-deliberate choice, not an oversight — revisit it if the mini gets tighter on
-disk, since Immich (345 GB), Seafile and Docker share the volume. A guard would
-naturally live in `attic-notify check`, which already runs daily and can mail.
+what Optimize Mac Storage is for, and the library now sits on a 250 GB-quota
+volume with 222 GB free rather than on the boot disk, so it cannot fill the
+system volume at all. A deliberate choice, not an oversight — revisit if
+`disk7` gets tight, since Immich (347 GB), Seafile and Docker share that
+container. A guard would naturally live in `attic-notify check`, which already
+runs daily and can mail.
+
+Relocating the library triggers a **full iCloud re-sync** of the new copy:
+`ZASSET` climbs from near zero back to the full count (observed 485 → 9,587 over
+~25 minutes). Do not judge a freshly moved library by an early `attic status` —
+it will under-report assets until the sync converges, and `Types:` reads
+`UNKNOWN 95%` while originals are still cloud-only. Deselecting the old library
+as System Photo Library also strips its iCloud references (9,737 → 619 assets),
+so **the old copy is not a usable fallback** — iCloud and S3 are.
 
 ## Checking it is working
 
