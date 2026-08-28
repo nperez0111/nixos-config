@@ -7,7 +7,34 @@
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINv/m8MJSWIPfqYqole/8e69PpMndNf2bowRbUpH5TuM nicholas.perez@tiptap.dev
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILkiB20On2DzTW2E66x/dHvqbj5CDfT/qcVlj7Md2uHI computers@nickthesick.com
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFvcYFSxJeE8+X9p7+fWVASrLR/DqRfw3RPHQ4TarAxf computers@nickthesick.com
+      # paseo container (agent sandbox on this host). Managed here because
+      # `force = true` above rewrites this file on every activation - a key
+      # added with `ssh-copy-id` survives exactly until the next ./bin/build,
+      # which then locks the container out of its own Docker host mid-task.
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOeNPnZTS5hBjAzi+sukJaJd3y04D5q0I85Wr0cEcsWh paseo-container@macmini
     '';
+    force = true;
+  };
+
+  # Homebrew (since ~2026) refuses to load formulae from untrusted third-party
+  # taps. Combined with homebrew.onActivation.upgrade = true, activation tries
+  # to upgrade these and hard-errors, aborting the switch AFTER user activation
+  # has already run - a half-applied system where launchd agents are installed
+  # but /run/current-system never advanced.
+  #
+  # This must be declarative: activation's `cleanup = "zap"` + `--force` deletes
+  # ~/.homebrew/trust.json on its way out, so a manual `brew trust` is consumed
+  # by the switch that uses it and gone before the next one. home-manager runs
+  # after the homebrew step, so it restores the file ready for the next switch.
+  ".homebrew/trust.json" = {
+    text = builtins.toJSON {
+      trustedtaps = [
+        "anomalyco/tap"
+        # koekeishiya renamed to asmvik on GitHub; brew records the resolved URL.
+        "https://github.com/asmvik/homebrew-formulae.git"
+        "oven-sh/bun"
+      ];
+    };
     force = true;
   };
   ".local/share/nix-sudoers".text = lib.concatMapStringsSep "\n"
