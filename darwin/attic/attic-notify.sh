@@ -217,9 +217,14 @@ Time     : $(date -u '+%Y-%m-%dT%H:%M:%SZ')
     fi
     clear_alert "attic-never-backed-up" "the attic backup job has run"
 
-    _mtime=$(stat -f %m "$BACKUP_LOG" 2>/dev/null || stat -c %Y "$BACKUP_LOG" 2>/dev/null)
+    # GNU stat (coreutils is on PATH ahead of /usr/bin) and BSD stat spell mtime
+    # differently, and GNU `stat -f %m` does not fail on the BSD form - it prints
+    # "?" and exits 0, so `cmd || fallback` silently yields garbage. Validate the
+    # result is numeric before accepting it, rather than trusting exit status.
+    _mtime=$(stat -c %Y "$BACKUP_LOG" 2>/dev/null)
+    case "$_mtime" in ''|*[!0-9]*) _mtime=$(stat -f %m "$BACKUP_LOG" 2>/dev/null) ;; esac
     case "$_mtime" in ''|*[!0-9]*)
-        log "ERROR: could not stat $BACKUP_LOG"
+        log "ERROR: could not read mtime of $BACKUP_LOG"
         return 0 ;;
     esac
 
@@ -233,7 +238,7 @@ scheduled:
   launchctl print gui/\$(id -u)/$BACKUP_LABEL
 
 Instance : $INSTANCE
-Last run : $(date -u -r "$_mtime" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || echo unknown)
+Last run : $(date -u -d "@$_mtime" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || date -u -r "$_mtime" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || echo unknown)
 Age      : ${_age_h}h
 Time     : $(date -u '+%Y-%m-%dT%H:%M:%SZ')
 "
