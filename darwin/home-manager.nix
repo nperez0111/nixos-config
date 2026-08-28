@@ -61,6 +61,7 @@ in
     autoUpdate = true;
     cleanup = "zap";
     upgrade = true;
+    extraFlags = [ "--force" ];
   };
   homebrew.prefix = "/opt/homebrew";
   homebrew.brews = pkgs.callPackage ./brews.nix { };

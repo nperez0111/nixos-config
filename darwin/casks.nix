@@ -11,6 +11,7 @@
   "keka"
   "multimc"
   "obsidian"
+  "openchamber"
   "orion"
   "orbstack"
   "raycast"

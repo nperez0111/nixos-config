@@ -9,6 +9,7 @@
 
 let
   user = "nickthesick";
+
 in
 {
 
@@ -34,15 +35,101 @@ in
     };
   };
 
+  # Launch WireGuard and auto-connect the "macmini" tunnel at login.
+  # The App Store WireGuard uses a Network Extension that needs the GUI
+  # running, so we open the app first, wait for the extension to register,
+  # then activate the tunnel via scutil.
+  launchd.user.agents.wireguard-autoconnect = {
+    script = ''
+      /usr/bin/open -a /Applications/WireGuard.app
+      # Wait for the Network Extension to register
+      for i in $(seq 1 30); do
+        if /usr/sbin/scutil --nc status "macmini" 2>/dev/null | head -1 | grep -q -v "No service"; then
+          break
+        fi
+        sleep 1
+      done
+      /usr/sbin/scutil --nc start "macmini"
+    '';
+    serviceConfig = {
+      RunAtLoad = true;
+    };
+  };
+
   # Disable Spotlight indexing — we use Raycast instead.
   # No built-in nix-darwin module exists, so we use a LaunchDaemon.
+  # Uses ExternalVolumesIgnore (undocumented mds pref found via reverse
+  # engineering) to tell mds to ignore all external/USB volumes, plus
+  # mdutil -d (stronger than -i off: disables both indexing AND searching).
   launchd.daemons.disable-spotlight = {
     script = ''
-      /usr/bin/mdutil -i off -a
+      # Tell mds to ignore all external volumes (reads by mds at startup)
+      /usr/bin/defaults write /Library/Preferences/com.apple.SpotlightServer.plist \
+        ExternalVolumesIgnore -bool true
+      /usr/bin/defaults write /Library/Preferences/com.apple.SpotlightServer.plist \
+        ExternalVolumesDefaultOff -bool true
+
+      # Disable indexing AND searching on all volumes (stronger than -i off)
+      /usr/bin/mdutil -d -a 2>/dev/null || true
+
+      # Time Machine volumes ignore mdutil; remove their indexes directly
+      for vol in /Volumes/*; do
+        [ -d "$vol/.Spotlight-V100" ] && /bin/rm -rf "$vol/.Spotlight-V100"
+      done
+      /bin/rm -rf /.Spotlight-V100 2>/dev/null || true
+
+      # Kill Spotlight worker processes so they pick up new prefs
+      /usr/bin/killall mdsync mdworker mdworker_shared mds_stores 2>/dev/null || true
     '';
     serviceConfig = {
       RunAtLoad = true;
       StartOnMount = true;
+    };
+  };
+
+  # Pigeons roost: P2P SSH tunnel via iroh/QUIC.
+  # Accepts incoming pigeons connections and proxies them to local sshd.
+  # The endpoint ID is persisted across restarts (keys stored in /var/root/.config/pigeons).
+  # To get the endpoint ID: sudo pigeons roost (it prints it on startup)
+  # or check /var/log/pigeons.log after the service starts.
+  launchd.daemons.pigeons-roost = {
+    serviceConfig = {
+      ProgramArguments = [
+        "${pkgs.pigeons}/bin/pigeons"
+        "roost"
+        "--ssh-port"
+        "22"
+      ];
+      RunAtLoad = true;
+      KeepAlive = {
+        SuccessfulExit = false;
+      };
+      EnvironmentVariables = {
+        RUST_LOG = "info";
+      };
+      WorkingDirectory = "/var/root";
+      StandardOutPath = "/var/log/pigeons.log";
+      StandardErrorPath = "/var/log/pigeons.log";
+    };
+  };
+
+  # Gracefully stop OrbStack before system shutdown/reboot.
+  # Runs a long-lived process that traps SIGTERM (sent by launchd during
+  # shutdown) and calls `orbctl stop` to cleanly shut down Docker containers
+  # and the VM, preventing stale NFS bind mounts on next boot.
+  launchd.daemons.orbstack-shutdown = {
+    script = ''
+      cleanup() {
+        /opt/homebrew/bin/orbctl stop 2>/dev/null || true
+        exit 0
+      }
+      trap cleanup SIGTERM SIGINT
+      # Sleep indefinitely; we only exist to catch the shutdown signal
+      while true; do sleep 3600 & wait $!; done
+    '';
+    serviceConfig = {
+      RunAtLoad = true;
+      KeepAlive = true;
     };
   };
 
@@ -51,9 +138,20 @@ in
     # Enable Remote Login (SSH daemon) so WireGuard peers can SSH in
     /usr/sbin/systemsetup -setremotelogin on >/dev/null 2>&1 || true
 
-    # Spotlight
-    /usr/bin/mdutil -i off -a
+    # Spotlight: set ExternalVolumesIgnore so mds ignores USB/external drives
+    /usr/bin/defaults write /Library/Preferences/com.apple.SpotlightServer.plist \
+      ExternalVolumesIgnore -bool true
+    /usr/bin/defaults write /Library/Preferences/com.apple.SpotlightServer.plist \
+      ExternalVolumesDefaultOff -bool true
+
+    # Disable indexing AND searching on all volumes (mdutil -d is stronger than -i off)
+    /usr/bin/mdutil -d -a 2>/dev/null || true
     /usr/bin/mdutil -E -a 2>/dev/null || true
+    for vol in /Volumes/*; do
+      [ -d "$vol/.Spotlight-V100" ] && /bin/rm -rf "$vol/.Spotlight-V100"
+    done
+    /bin/rm -rf /.Spotlight-V100 2>/dev/null || true
+    /usr/bin/killall mds mdsync mdworker mdworker_shared mds_stores 2>/dev/null || true
 
     # Kill Siri and proactive suggestion daemons so they pick up the
     # disabled preferences immediately (they'll stay dead since we set
@@ -91,6 +189,7 @@ in
 
   nixpkgs.overlays = [
     (import ../overlays/niv-managed-dmg-apps/default.nix)
+    (import ../overlays/pigeons/default.nix)
   ];
 
   # Allow nickthesick to run any command via sudo without a password prompt
@@ -129,6 +228,7 @@ in
     pkgs.nivApps.cemu
     pkgs.nivApps.flirc
     pkgs.nivApps.java
+    pkgs.pigeons
   ];
 
   fonts.packages = with pkgs; [
