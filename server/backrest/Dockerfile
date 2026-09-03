@@ -10,13 +10,15 @@ FROM garethgeorge/backrest:v1.14.1
 #                       with "server version mismatch" against a newer major.
 #
 #                       This image serves two hosts with different servers:
-#                         bastion  bookorbit-db      PostgreSQL 18.6
+#                         bastion  docs_postgres     PostgreSQL 16 (since
+#                                                    2026-09-03; bookorbit-db,
+#                                                    PG 18.6, was retired)
 #                         macmini  immich_postgres   PostgreSQL 14.19
-#                       so the client has to be 18.x. It was 17 until that
-#                       floor moved to 18.6 and failed every bastion backup
-#                       (the hook is ON_ERROR_FATAL, so one refused dump
-#                       aborted the whole snapshot). 18.4 is verified against
-#                       both servers above.
+#                       Keep the client at 18.x anyway: it was 17 until the
+#                       bookorbit floor moved to 18.6 and failed every bastion
+#                       backup (the hook is ON_ERROR_FATAL, so one refused
+#                       dump aborted the whole snapshot). A newer client is
+#                       always safe; an older one is not.
 #   mariadb-client      /usr/bin/mariadb-dump
 #   jq                  building JSON request bodies safely
 #
@@ -32,7 +34,16 @@ COPY server/backrest/dump-databases.sh /usr/local/bin/dump-databases.sh
 # silently. It needs only curl/restic/jq, all already present above.
 COPY server/backrest/alert-check.sh /usr/local/bin/alert-check.sh
 
-RUN chmod +x /usr/local/bin/dump-databases.sh /usr/local/bin/alert-check.sh
+# Damped failure mail (replaces the direct CONDITION_ANY_ERROR shoutrrr hooks,
+# 2026-09-03): mails only when the same task fails on consecutive runs, at most
+# once per 24h, and sends RESOLVED on the next success. alert-lib.sh is the
+# mailer + dedupe state shared by both alert scripts; it reads the SMTP
+# credential from BACKREST_SMTP_URL in the stack Env.
+COPY server/backrest/alert-lib.sh /usr/local/bin/alert-lib.sh
+COPY server/backrest/alert-error.sh /usr/local/bin/alert-error.sh
+
+RUN chmod +x /usr/local/bin/dump-databases.sh /usr/local/bin/alert-check.sh \
+    /usr/local/bin/alert-lib.sh /usr/local/bin/alert-error.sh
 
 # No ENTRYPOINT/CMD override: backrest must still start exactly as it does in
 # the base image. This layer only adds tools next to it.

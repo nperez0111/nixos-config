@@ -38,12 +38,12 @@
 #     failures, so it neither cries wolf nor goes quiet.
 #
 # CREDENTIALS
-#   Repo passwords/S3 keys and the SMTP credential are all read out of
-#   backrest's own /config/config.json (mode 0600). There is exactly one copy of
-#   each secret per host. The SMTP credential is reused from the shoutrrr URL of
-#   the CONDITION_ANY_ERROR hook, so rotating it in one place rotates it here
-#   too. Secrets are passed to curl on stdin via `curl -K -`; only the
-#   non-secret message body is ever written to a temp file.
+#   Repo passwords/S3 keys are read out of backrest's own /config/config.json
+#   (mode 0600). The SMTP credential is BACKREST_SMTP_URL from the stack Env
+#   (see alert-lib.sh), shared with alert-error.sh, so rotating it in one place
+#   rotates it for every mail this image sends. Secrets are passed to curl on
+#   stdin via `curl -K -`; only the non-secret message body is ever written to
+#   a temp file.
 #
 # Exit status is always 0 unless the script itself is broken. It is invoked from
 # a CONDITION_SNAPSHOT_END hook with onError=ON_ERROR_IGNORE; a non-zero exit
@@ -52,22 +52,18 @@
 
 set -u
 
-CFG=${BACKREST_CONFIG:-/config/config.json}
-STATE_DIR=${BACKREST_ALERT_STATE:-/data/.backrest-alerts}
+# Mailer, dedupe state and the shared variables (CFG, STATE_DIR, REPEAT_HOURS,
+# DRY_RUN, NOW, INSTANCE, log, alert, clear_alert) come from alert-lib.sh, which
+# alert-error.sh shares so both scripts mail and deduplicate identically.
+LOG_TAG=alert-check
+# shellcheck source=alert-lib.sh
+. "$(dirname "$0")/alert-lib.sh"
+
 STALE_HOURS=${BACKREST_STALE_HOURS:-36}
 MAX_SNAPSHOTS=${BACKREST_MAX_SNAPSHOTS:-120}
-REPEAT_HOURS=${BACKREST_ALERT_REPEAT_HOURS:-24}
 DEGRADED_AFTER=${BACKREST_DEGRADED_AFTER:-3}
 SKIP_IDS=${BACKREST_ALERT_SKIP:-alert-test}
-DRY_RUN=${BACKREST_ALERT_DRY_RUN:-0}
 RESTIC=${RESTIC_BIN:-/bin/restic}
-
-NOW=$(date -u +%s)
-mkdir -p "$STATE_DIR" 2>/dev/null || true
-
-log() { printf '[alert-check] %s\n' "$*"; }
-
-INSTANCE=$(jq -r '.instance // "unknown"' "$CFG")
 
 # ---------------------------------------------------------------- jq helpers
 # jq's strptime has no %z, so normalise the numeric offset by hand. Verified
@@ -83,99 +79,6 @@ def to_epoch:
   | $base - $off;
 def tagval($p): (.tags // []) | map(select(startswith($p))) | first // null | if . == null then null else .[($p|length):] end;
 '
-
-# ------------------------------------------------------------------- mailer
-# Parses the SMTP credential out of the shoutrrr URL already stored in the
-# config by the CONDITION_ANY_ERROR hooks.
-urldecode() {
-    # shellcheck disable=SC2059
-    printf "$(printf '%s' "$1" | sed 's/%/\\x/g')"
-}
-
-SHOUTRRR_URL=$(jq -r '[.repos[]?.hooks[]? | select(.actionShoutrrr) | .actionShoutrrr.shoutrrrUrl] | first // empty' "$CFG")
-
-send_mail() {
-    _subject=$1
-    _body=$2
-
-    if [ -z "$SHOUTRRR_URL" ]; then
-        log "ERROR: no shoutrrr hook found in $CFG; cannot send mail"
-        return 1
-    fi
-
-    _rest=${SHOUTRRR_URL#smtp://}
-    _userinfo=${_rest%%@*}
-    _hostrest=${_rest#*@}
-    _hostport=${_hostrest%%/*}
-    _query=${SHOUTRRR_URL#*\?}
-
-    _user=$(urldecode "${_userinfo%%:*}")
-    _pass=$(urldecode "${_userinfo#*:}")
-
-    _from=$(printf '%s' "$_query" | tr '&' '\n' | sed -n 's/^from=//p'); _from=$(urldecode "$_from")
-    _to=$(printf '%s' "$_query"   | tr '&' '\n' | sed -n 's/^to=//p');   _to=$(urldecode "$_to")
-
-    if [ "$DRY_RUN" = "1" ]; then
-        log "DRY_RUN: would mail to=$_to subject=$_subject"
-        printf '%s\n' "$_body" | sed 's/^/[dry-run] /'
-        return 0
-    fi
-
-    # Body only - never credentials - goes to a temp file.
-    _msg=$(mktemp /tmp/alert-check-msg.XXXXXX) || return 1
-    {
-        printf 'From: backrest <%s>\n' "$_from"
-        printf 'To: %s\n' "$_to"
-        printf 'Subject: %s\n' "$_subject"
-        printf 'Date: %s\n' "$(date -R 2>/dev/null || date)"
-        printf 'MIME-Version: 1.0\nContent-Type: text/plain; charset=utf-8\n\n'
-        printf '%s\n' "$_body"
-    } > "$_msg"
-
-    # Credentials via stdin (curl -K -), never argv, never a file.
-    printf 'url = "smtp://%s"\nuser = "%s:%s"\nmail-from = "%s"\nmail-rcpt = "%s"\nupload-file = "%s"\nssl-reqd\nsilent\nshow-error\n' \
-        "$_hostport" "$_user" "$_pass" "$_from" "$_to" "$_msg" \
-        | curl -K - >/dev/null 2>&1
-    _rc=$?
-    rm -f "$_msg"
-    [ $_rc -eq 0 ] && log "mailed: $_subject" || log "ERROR: mail send failed rc=$_rc: $_subject"
-    return $_rc
-}
-
-statefile() { printf '%s/%s' "$STATE_DIR" "$(printf '%s' "$1" | sha256sum | cut -c1-32)"; }
-
-# alert <key> <subject> <body>  - deduplicated: re-sends at most every REPEAT_HOURS
-alert() {
-    _key=$1; _subj=$2; _body=$3
-    _sf=$(statefile "$_key")
-    _last=0
-    if [ -f "$_sf" ]; then
-        _last=$(cut -d' ' -f1 < "$_sf" 2>/dev/null)
-        case "$_last" in ''|*[!0-9]*) _last=0 ;; esac
-    fi
-    if [ $((NOW - _last)) -lt $((REPEAT_HOURS * 3600)) ]; then
-        log "suppressed (deduplicated, last sent $((( NOW - _last) / 60)) min ago): $_key"
-        return 0
-    fi
-    if send_mail "$_subj" "$_body"; then
-        printf '%s %s\n' "$NOW" "$_key" > "$_sf"
-    fi
-}
-
-# clear_alert <key> - if the key was alerting, send one RESOLVED mail
-clear_alert() {
-    _key=$1; _what=$2
-    _sf=$(statefile "$_key")
-    if [ -f "$_sf" ]; then
-        rm -f "$_sf"
-        send_mail "[backrest][$INSTANCE] RESOLVED" "RESOLVED: $_what
-
-Instance : $INSTANCE
-Key      : $_key
-Time     : $(date -u '+%Y-%m-%dT%H:%M:%SZ')
-"
-    fi
-}
 
 is_skipped() {
     for _s in $SKIP_IDS; do [ "$1" = "$_s" ] && return 0; done
