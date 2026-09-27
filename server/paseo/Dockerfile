@@ -1,4 +1,4 @@
-FROM ghcr.io/getpaseo/paseo:latest
+FROM ghcr.io/getpaseo/paseo:0.10.0-beta.1
 
 # Install tools as root, then grant paseo passwordless sudo so agents can
 # escalate when needed (e.g. apt install) without running the daemon as root.
@@ -31,8 +31,17 @@ RUN groupadd -g 998 docker || true \
 RUN echo "paseo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/paseo \
  && chmod 0440 /etc/sudoers.d/paseo
 
-# Coding agent CLIs + dev tooling.
-RUN npm install -g @anthropic-ai/claude-code @openai/codex opencode-ai vite-plus
+# Coding agent CLIs + dev tooling.  The daemon runs as `paseo`, and Codex
+# updates itself with `npm install -g`.  Keep global npm packages outside the
+# root-owned /usr/local prefix so that update can atomically replace its own
+# package without sudo.  /home/paseo is a volume mount, so it cannot be used
+# for the image's baseline installation.
+ENV NPM_CONFIG_PREFIX=/opt/paseo-npm
+ENV PATH=/opt/paseo-npm/bin:${PATH}
+RUN mkdir -p "$NPM_CONFIG_PREFIX" \
+ && chown paseo:paseo "$NPM_CONFIG_PREFIX" \
+ && npm install -g @anthropic-ai/claude-code @openai/codex @opencode/cli@2.0.18 vite-plus \
+ && chown -R paseo:paseo "$NPM_CONFIG_PREFIX"
 ENV BUN_INSTALL=/usr/local
 RUN curl -fsSL https://bun.sh/install | bash
 ENV UV_INSTALL_DIR=/usr/local/bin
